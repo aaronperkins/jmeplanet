@@ -1,48 +1,30 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package jmeplanet;
 
 import com.jme3.asset.AssetManager;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
-import com.jme3.scene.Spatial;
 import com.jme3.scene.Node;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Mesh;
-import com.jme3.scene.VertexBuffer.Type;
-import com.jme3.util.BufferUtils;
-import com.jme3.math.ColorRGBA;
-import com.jme3.material.Material;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.nio.IntBuffer;
-
-/**
- *
- * @author aaron
- */
 public class Planet extends Node {
     
     protected AssetManager assetManager;
     protected float baseRadius = 50.0f;
     protected float scalingFactor = 1f;
-    protected int quads = 32;
-    protected int minDepth = 1;
+    protected int quads = 16;
+    protected int minDepth = 0;
     protected int maxDepth = 10;
     protected Quad[] surfaceSide = new Quad[6];
     protected HeightDataSource dataSource;
+    protected float heightScale;
     
-    public Planet(AssetManager assetManager, float baseRadius) {
+    public Planet(AssetManager assetManager, float baseRadius, float heightScale) {
         
         this.assetManager = assetManager;
         this.baseRadius = baseRadius;
+        this.heightScale = heightScale;
         
         dataSource = new FractalDataSource();
+        dataSource.setHeightScale(this.heightScale);
 
         Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
         Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
@@ -189,6 +171,10 @@ public class Planet extends Node {
     
     public float getRadius() {
         return this.baseRadius;
+    }
+    
+    public float getHeightScale() {
+        return this.heightScale;
     }
      
 }

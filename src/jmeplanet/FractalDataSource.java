@@ -1,30 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package jmeplanet;
 
-import com.jme3.math.FastMath;
-import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 
-import java.nio.FloatBuffer;
-
-import com.jme3.terrain.heightmap.AbstractHeightMap;
-import com.jme3.terrain.heightmap.HeightMap;
-import com.jme3.terrain.noise.ShaderUtils;
-import com.jme3.terrain.noise.basis.FilteredBasis;
-import com.jme3.terrain.noise.filter.IterativeFilter;
-import com.jme3.terrain.noise.filter.OptimizedErode;
-import com.jme3.terrain.noise.filter.PerturbFilter;
-import com.jme3.terrain.noise.filter.SmoothFilter;
-import com.jme3.terrain.noise.fractal.FractalSum;
-import com.jme3.terrain.noise.modulator.NoiseModulator;
-
-/**
- *
- * @author aaron
- */
 public class FractalDataSource implements HeightDataSource {
     
     protected static final int NOISE_QUALITY_LOW=0;
@@ -63,6 +40,8 @@ public class FractalDataSource implements HeightDataSource {
     private float scale = 2.12f;
     
     private Octave[] octaves;
+    
+    private float heightScale = 1f;
 
     public FractalDataSource() {
         
@@ -87,8 +66,15 @@ public class FractalDataSource implements HeightDataSource {
 
     }
 
+    public void setHeightScale(float heightScale) {
+        this.heightScale = heightScale;
+    }
+    
+    public float getHeightScale() {
+        return this.heightScale;
+    }
+    
     public float getValue(Vector3f position) {
-
         float value = 0.0f;
         float signal = 1.0f;
 
@@ -102,15 +88,13 @@ public class FractalDataSource implements HeightDataSource {
                 value += signal * this.octaves[o].persistence;
         }
         
-        return value;
-
+        return value * heightScale;
     }
     
     private float calculateGradient (float x, float y, float z, int seed)
     {
             //if (this.quality == NOISE_QUALITY_STD)
                     return calcGradientCoherentNoiseStd (x, y, z, seed, this.scale);
-                    
             /*
             else if (this.quality == NOISE_QUALITY_HIGH)
                     return Generator3D::calcGradientCoherentNoiseHigh (x, y, z, seed, mScale);

@@ -1,32 +1,14 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package jmeplanet;
 
 import com.jme3.asset.AssetManager;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
-import com.jme3.scene.Spatial;
 import com.jme3.scene.Node;
 import com.jme3.scene.Geometry;
-import com.jme3.scene.Mesh;
-import com.jme3.scene.VertexBuffer.Type;
-import com.jme3.util.BufferUtils;
-import com.jme3.math.ColorRGBA;
 import com.jme3.material.Material;
 import com.jme3.bounding.BoundingBox;
 import com.jme3.terrain.heightmap.AbstractHeightMap;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.nio.IntBuffer;
-import java.util.SortedSet;
-
-/**
- *
- * @author aaron
- */
 public class Quad {
     
     protected String name;
@@ -54,10 +36,6 @@ public class Quad {
     protected BoundingBox aabb;
     protected AbstractHeightMap heightMap;
     protected Quad[] subQuad = new Quad[4];
-    protected String leftNeighbour;
-    protected String rightNeighbour;
-    protected String upNeighbour;
-    protected String downNeighbour;
     
     public Quad(
             String name,
@@ -114,9 +92,6 @@ public class Quad {
         this.patch.prepare();
         this.quadCenter = this.patch.getCenter();
         this.aabb = this.patch.getAABB();
-        if (this.depth == 0)
-                show();
-                     
     }
     
     public void setCameraPosition(Vector3f position) {
@@ -127,9 +102,6 @@ public class Quad {
             }
         }
         
-        if (this.quadNode != null) {
-            this.aabb = (BoundingBox)this.quadNode.getWorldBound();
-        }
         float distanceToEdge = this.aabb.distanceToEdge(position);
         float aabbLength = this.aabb.getExtent(null).length();
         
@@ -146,24 +118,8 @@ public class Quad {
                     this.subQuad[2] != null &&
                     this.subQuad[3] != null)) 
             {
-                
-
-                
-                
-                
-                // We are showing, but we are too close and our subPatches are ready to be shown
-                // so show sub-patches and hide ourselves.
-                for (int i = 0; i < 4; i++) {
-                    //System.out.println(this.name + " Showing: " + this.subQuad[i].name);
-                    //this.subQuad[i].show();
-                }
-
-                hide();
-                
-                return;
-                
+                hide();              
             } else {
-                //System.out.println(this.name + " Split");
                 prepareSubQuads();
             }  
             
@@ -176,7 +132,6 @@ public class Quad {
             {
                 
                 if (this.quadGeometry == null) {
-                    //System.out.println(this.name + " Merge");
                     show();
                 }
                 
@@ -185,11 +140,11 @@ public class Quad {
                         this.subQuad[i].hide();
                         this.subQuad[i] = null;
                     }
-                }
-                
+                } 
             }
             
         }
+        
     }
 
     public void show()
@@ -215,6 +170,7 @@ public class Quad {
         
         if (this.quadGeometry.getParent() == null) {
            this.quadNode.attachChild(this.quadGeometry);
+           this.aabb = (BoundingBox)this.quadNode.getWorldBound();
         }
         
     }

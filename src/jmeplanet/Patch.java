@@ -1,35 +1,14 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package jmeplanet;
 
-import com.jme3.asset.AssetManager;
-import com.jme3.math.FastMath;
 import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
-import com.jme3.scene.Spatial;
-import com.jme3.scene.Node;
-import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.VertexBuffer.Type;
 import com.jme3.util.BufferUtils;
-import com.jme3.math.ColorRGBA;
-import com.jme3.material.Material;
-import com.jme3.terrain.heightmap.AbstractHeightMap;
-
 import com.jme3.bounding.BoundingBox;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.nio.IntBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 
-
-/**
- *
- * @author aaron
- */
 public class Patch {
        
     protected int quads;
@@ -43,14 +22,11 @@ public class Patch {
     protected float scalingFactor;
     protected HeightDataSource dataSource;
     protected int position;
-    protected int padding = 2;
     
+    protected int padding = 2;
     protected Mesh mesh;
     protected BoundingBox aabb;
     protected Vector3f center;
-    
-    protected int[] indexBuffer;
-    protected int[] edgeVertexIndex;
    
     public Patch(
             int quads,
@@ -80,158 +56,99 @@ public class Patch {
     
     public Mesh prepare() {
         
-        mesh = new Mesh();
-        
-        Vector3f[] vertexPosition = new Vector3f[(this.quads + 2*this.padding + 1) * (this.quads + 2*this.padding + 1)];
-        float[] vertexColor = new float[vertexPosition.length * 4];
-        Vector3f[] vertexNormal = new Vector3f[(this.quads + 1) * (this.quads + 1)];
+        int quadVertexCount = (this.quads + 1) * (this.quads + 1);
+        int quadVertexCountPadded = (this.quads + 2*this.padding + 1) * (this.quads + 2*this.padding + 1);
+        int skirtVertexCount = this.quads * 4;
+        int totalVertexCount = quadVertexCount + skirtVertexCount;
+        int verticesPerSide = this.quads + 1;
+        int quadTriangles = (2 * quads * quads);
+        int skirtTriangles = skirtVertexCount * 2;
+        int totalTriangles = quadTriangles + skirtTriangles;
+
+        // Calculate vertex positions, normals, etc
+        Vector3f[] vertexPosition = new Vector3f[quadVertexCountPadded];
+        float[] vertexColor = new float[4 * quadVertexCountPadded];
+        Vector3f[] vertexNormal = new Vector3f[quadVertexCount];
         
         generateVertexPositions(vertexPosition, vertexColor);
         generateVertexNormals(vertexNormal, vertexPosition);
         
-        // Load data into final buffers
-        int skirtVertexCount = this.quads * 4;
-        int vertexCount = (this.quads + 1) * (this.quads + 1);
-        
-        Vector3f[] vertexData = new Vector3f[vertexCount + skirtVertexCount];
-        float[] colorData = new float[vertexData.length * 4];
-        Vector3f[] normalData = new Vector3f[vertexData.length];
-        
-        int index = 0;
+        // Create final buffers
+        FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(3 * totalVertexCount);
+        FloatBuffer colorBuffer = BufferUtils.createFloatBuffer((4 * totalVertexCount));
+        FloatBuffer normalBuffer = BufferUtils.createFloatBuffer(3 * totalVertexCount);
+        IntBuffer indexBuffer = BufferUtils.createIntBuffer(3 * totalTriangles);
+        // Fill final buffers
         for (int y = 0; y < (this.quads + 1); y++)
         {
             for (int x = 0; x < (this.quads + 1); x++)
             {
-                int index1 = (this.quads + 2 * this.padding + 1) * (y + this.padding) + (x + this.padding);
-                int index2 = (this.quads + 1) * y + x;
+                int vi = (this.quads + 2 * this.padding + 1) * (y + this.padding) + (x + this.padding);
+                int ni = (this.quads + 1) * y + x;
 
                 // Vertex pos
-                vertexData[index] = vertexPosition[index1];
-
-                colorData[index * 4 ] = vertexColor[index1 * 4 ];
-                colorData[index * 4 +1] = vertexColor[index1 * 4 +1];
-                colorData[index * 4 +2] = vertexColor[index1 * 4 +2];
-                colorData[index * 4 +3] = vertexColor[index1 * 4 +3];
-
+                vertexBuffer.put(vertexPosition[vi].x);
+                vertexBuffer.put(vertexPosition[vi].y);
+                vertexBuffer.put(vertexPosition[vi].z);
+                // Vertex color
+                colorBuffer.put(vertexColor[vi * 4 ]);
+                colorBuffer.put(vertexColor[vi * 4 + 1]);
+                colorBuffer.put(vertexColor[vi * 4 + 2]);
+                colorBuffer.put(vertexColor[vi * 4 + 3]);
                 // Vertex normal
-                normalData[index] = vertexNormal[index2];
-
-                index++;
+                normalBuffer.put(vertexNormal[ni].x);
+                normalBuffer.put(vertexNormal[ni].y);
+                normalBuffer.put(vertexNormal[ni].z);
             }
         }
         
         // Get the patch's edge vertex indexes going clockwise
         int indexEdgeVertexIndex = 0;
-        int verticesPerSide = this.quads + 1;
-        edgeVertexIndex = new int[skirtVertexCount];
+        int[] edgeVertexIndex = new int[skirtVertexCount];
         for (int i = 0; i < verticesPerSide; i++)
             edgeVertexIndex[indexEdgeVertexIndex++] = i;
-        for (int i = verticesPerSide + this.quads; i < vertexCount + 1; i+=verticesPerSide)
+        for (int i = verticesPerSide + this.quads; i < quadVertexCount + 1; i+=verticesPerSide)
             edgeVertexIndex[indexEdgeVertexIndex++] = i;
-        for (int i = vertexCount - 2; i >= verticesPerSide * quads; i--)
+        for (int i = quadVertexCount - 2; i >= verticesPerSide * quads; i--)
             edgeVertexIndex[indexEdgeVertexIndex++] = i;
         for (int i = verticesPerSide * quads - verticesPerSide; i > 0; i-=verticesPerSide)
             edgeVertexIndex[indexEdgeVertexIndex++] = i;
         
-        // Add skirt vertexes to end of vertex buffer
-        int indexSkirt = vertexCount;
-        for (int i = 0; i < skirtVertexCount; i++)
-        {
-            
-            vertexData[indexSkirt] = vertexData[edgeVertexIndex[i]].subtract(this.center.normalize().mult(300f));
-            
+        // Add skirt to end of vertex buffer
+        for (int i = 0; i < skirtVertexCount; i++) {
+            // Make skirt 1/4th the height scale
+            Vector3f v = new Vector3f(
+                    vertexBuffer.get(3 * edgeVertexIndex[i]), 
+                    vertexBuffer.get(3 * edgeVertexIndex[i] + 1),
+                    vertexBuffer.get(3 * edgeVertexIndex[i] + 2));
+            v.subtractLocal(this.center.normalize().mult(this.dataSource.getHeightScale() / 4));
+            vertexBuffer.put(v.x);
+            vertexBuffer.put(v.y);
+            vertexBuffer.put(v.z);
 
-            normalData[indexSkirt] = vertexNormal[edgeVertexIndex[i]];
+            normalBuffer.put(normalBuffer.get(3 * edgeVertexIndex[i]));
+            normalBuffer.put(normalBuffer.get(3 * edgeVertexIndex[i] + 1));
+            normalBuffer.put(normalBuffer.get(3 * edgeVertexIndex[i] + 2));
             
-            /*
-            colorData[indexSkirt * 4 ] = colorData[edgeVertexIndex[i] * 4 ];
-            colorData[indexSkirt * 4 +1] = colorData[edgeVertexIndex[i] * 4 +1];
-            colorData[indexSkirt * 4 +2] = colorData[edgeVertexIndex[i] * 4 +2];
-            colorData[indexSkirt * 4 +3] = colorData[edgeVertexIndex[i] * 4 +3];
-            
-             * 
-             */
-            colorData[indexSkirt * 4 ] = 1f;
-            colorData[indexSkirt * 4 +1] = 0;
-            colorData[indexSkirt * 4 +2] = 0;
-            colorData[indexSkirt * 4 +3] = 1f;
-
-            indexSkirt++;         
+            colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4));
+            colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 1));
+            colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 2));
+            colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 3));
         }
       
-        generateIndices();
-        
-//        System.out.println("vc: " + vertexData.length);
-//        for (int i = 0; i < vertexData.length; i++) {
-//            System.out.println(String.valueOf(i) + ": " + vertexData[i]);
-//        }
-//        
-//        System.out.println("ic: " + indexBuffer.length);
-//        for (int i = 0; i < indexBuffer.length; i+=3) {
-//            System.out.print(String.valueOf(indexBuffer[i]) + ",");
-//            System.out.print(String.valueOf(indexBuffer[i+1]) + ",");
-//            System.out.println(String.valueOf(indexBuffer[i+2]));
-//        }
-        
+        generateIndices(indexBuffer, edgeVertexIndex);
 
         // Set mesh buffers
-        mesh.setBuffer(Type.Position, 3, BufferUtils.createFloatBuffer(vertexData));
-        mesh.setBuffer(Type.Normal, 3, BufferUtils.createFloatBuffer(normalData));
-        mesh.setBuffer(Type.Color, 4, BufferUtils.createFloatBuffer(colorData));
-        mesh.setBuffer(Type.Index, 3, BufferUtils.createIntBuffer(indexBuffer));  
+        mesh = new Mesh();
+        mesh.setBuffer(Type.Position, 3, vertexBuffer);
+        mesh.setBuffer(Type.Normal, 3, normalBuffer);
+        mesh.setBuffer(Type.Color, 4, colorBuffer);
+        mesh.setBuffer(Type.Index, 3, indexBuffer);  
         mesh.updateBound();
-        
-        //mesh.setMode(Mesh.Mode.Points);
-        //mesh.setPointSize(5f);
-        //mesh.setStatic();
-        mesh.setDynamic();
         
         return mesh; 
     }
-    
-    protected void generateIndices() {
-        int skirtTriangles = edgeVertexIndex.length * 2;
-        int maxTriangles = (2 * quads * quads) + skirtTriangles;
-        int triangles = maxTriangles;
         
-        indexBuffer = new int[3 * triangles];
-        
-        int index = 0;
-        for (int y = 0; y < quads; y++) {
-            for (int x = 0; x < quads; x++) {
-                indexBuffer[index++] = y * (quads + 1) + x;
-                indexBuffer[index++] = (y + 1) * (quads + 1) + x;
-                indexBuffer[index++] = y * (quads + 1) + x + 1;
-                indexBuffer[index++] = (y + 1) * (quads + 1) + x;
-                indexBuffer[index++] = (y + 1) * (quads + 1) + x + 1;
-                indexBuffer[index++] = y * (quads + 1) + x + 1;
-            }
-        }  
-        
-        int skirtOffset = (this.quads + 1) * (this.quads + 1);
-        for (int y = 0; y < 1; y++) {
-            for (int x = 0; x < edgeVertexIndex.length; x++) {
-                if (x != edgeVertexIndex.length - 1) {
-                    indexBuffer[index++] = edgeVertexIndex[x];
-                    indexBuffer[index++] = edgeVertexIndex[x  + 1];
-                    indexBuffer[index++] = x + skirtOffset;                
-                    indexBuffer[index++] = x + skirtOffset;
-                    indexBuffer[index++] = edgeVertexIndex[x + 1];       
-                    indexBuffer[index++] = x + 1 + skirtOffset;
-                } else {
-                    indexBuffer[index++] = edgeVertexIndex[x];
-                    indexBuffer[index++] = edgeVertexIndex[0];
-                    indexBuffer[index++] = x + skirtOffset;                
-                    indexBuffer[index++] = x + skirtOffset;
-                    indexBuffer[index++] = edgeVertexIndex[0];       
-                    indexBuffer[index++] = skirtOffset;
-                }
-                
-            }
-        }
-        
-    }
-    
     public boolean isPrepared() {
         return this.mesh != null;
     }
@@ -357,7 +274,7 @@ public class Patch {
                 unitSpherePos[index] = pos.normalize();
                 
                 // get height data for given index
-                heightData[index] = this.dataSource.getValue(unitSpherePos[index]) * 150f;                    
+                heightData[index] = this.dataSource.getValue(unitSpherePos[index]);                    
             }
         }
               
@@ -422,7 +339,7 @@ public class Patch {
     
     protected void generateVertexNormals(Vector3f[] vertexNormal, Vector3f[] vertexPosition) {
        
-        // Calculate vertex normals, texture coordinates and interpolated positions
+        // Calculate vertex normals
         for (int y = 0; y < (this.quads + 1); y++)
         {
             for (int x = 0; x < (this.quads + 1); x++)
@@ -454,6 +371,43 @@ public class Patch {
                 Vector3f n6 = nextYVertex.subtract(thisVertex).cross(nextXVertex.subtract(thisVertex));
 
                 vertexNormal[index] = (n1.add(n2).add(n3).add(n4).add(n5).add(n6)).normalize();
+            }
+        }
+        
+    }
+    
+    protected void generateIndices(IntBuffer indexBuffer, int[] edgeVertexIndex) {
+        
+        for (int y = 0; y < quads; y++) {
+            for (int x = 0; x < quads; x++) {
+                indexBuffer.put(y * (quads + 1) + x);
+                indexBuffer.put((y + 1) * (quads + 1) + x);
+                indexBuffer.put(y * (quads + 1) + x + 1);
+                indexBuffer.put((y + 1) * (quads + 1) + x);
+                indexBuffer.put((y + 1) * (quads + 1) + x + 1);
+                indexBuffer.put(y * (quads + 1) + x + 1);
+            }
+        }  
+
+        int skirtOffset = (this.quads + 1) * (this.quads + 1);
+        for (int y = 0; y < 1; y++) {
+            for (int x = 0; x < edgeVertexIndex.length; x++) {
+                if (x != edgeVertexIndex.length - 1) {
+                    indexBuffer.put(edgeVertexIndex[x]);
+                    indexBuffer.put(edgeVertexIndex[x + 1]);
+                    indexBuffer.put(x + skirtOffset);                
+                    indexBuffer.put(x + skirtOffset);
+                    indexBuffer.put(edgeVertexIndex[x + 1]);       
+                    indexBuffer.put(x + 1 + skirtOffset);
+                } else {
+                    indexBuffer.put(edgeVertexIndex[x]);
+                    indexBuffer.put(edgeVertexIndex[0]);
+                    indexBuffer.put(x + skirtOffset);                
+                    indexBuffer.put(x + skirtOffset);
+                    indexBuffer.put(edgeVertexIndex[0]);       
+                    indexBuffer.put(skirtOffset);
+                }
+                
             }
         }
         
