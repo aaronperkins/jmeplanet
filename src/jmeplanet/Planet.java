@@ -1,0 +1,210 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+package jmeplanet;
+
+import com.jme3.asset.AssetManager;
+import com.jme3.math.FastMath;
+import com.jme3.math.Vector3f;
+import com.jme3.scene.Spatial;
+import com.jme3.scene.Node;
+import com.jme3.scene.Geometry;
+import com.jme3.scene.Mesh;
+import com.jme3.scene.VertexBuffer.Type;
+import com.jme3.util.BufferUtils;
+import com.jme3.math.ColorRGBA;
+import com.jme3.material.Material;
+
+import java.util.List;
+import java.util.ArrayList;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.nio.IntBuffer;
+
+/**
+ *
+ * @author aaron
+ */
+public class Planet extends Node {
+    
+    protected AssetManager assetManager;
+    protected float baseRadius = 50.0f;
+    protected float scalingFactor = 1f;
+    protected int quads = 32;
+    protected int minDepth = 1;
+    protected int maxDepth = 10;
+    protected Quad[] surfaceSide = new Quad[6];
+    protected HeightDataSource dataSource;
+    protected SortedSet<String> quadNameSet;
+    
+    
+    public Planet(AssetManager assetManager, float baseRadius) {
+        
+        this.assetManager = assetManager;
+        this.baseRadius = baseRadius;
+        
+        dataSource = new FractalDataSource();
+        quadNameSet = new TreeSet<String>();
+
+
+        Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
+        Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
+        surfaceSide[0] = new Quad(
+                "SurfaceRight",
+                quadNameSet,
+                this.assetManager,
+                this,
+                rightMin,
+                rightMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                this.dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+   
+        Vector3f leftMin = new Vector3f(-1.0f, 1.0f, -1.0f);
+        Vector3f leftMax = new Vector3f(-1.0f, -1.0f, 1.0f);
+        surfaceSide[1] = new Quad(
+                "SurfaceLeft",
+                quadNameSet,
+                this.assetManager,
+                this,
+                leftMin,
+                leftMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                this.dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+
+        Vector3f topMin = new Vector3f(-1.0f, 1.0f, -1.0f);
+        Vector3f topMax = new Vector3f(1.0f, 1.0f, 1.0f);
+        surfaceSide[2] = new Quad(
+                "SurfaceTop",
+                quadNameSet,
+                this.assetManager,
+                this,
+                topMin,
+                topMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                this.dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+
+        Vector3f bottomMin = new Vector3f(-1.0f, -1.0f, 1.0f);
+        Vector3f bottomMax = new Vector3f(1.0f, -1.0f, -1.0f);
+        surfaceSide[3] = new Quad(
+                "SurfaceBottom",
+                quadNameSet,
+                this.assetManager,
+                this,
+                bottomMin,
+                bottomMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                this.dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+
+        
+        Vector3f frontMin = new Vector3f(-1.0f, 1.0f, 1.0f);
+        Vector3f frontMax = new Vector3f(1.0f, -1.0f, 1.0f);
+        surfaceSide[4] = new Quad(
+                "SurfaceFront",
+                quadNameSet,
+                this.assetManager,
+                this,
+                frontMin,
+                frontMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                this.dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+
+        Vector3f backMin = new Vector3f(1.0f, 1.0f, -1.0f);
+        Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
+        surfaceSide[5] = new Quad(
+                "SurfaceBack",
+                quadNameSet,
+                this.assetManager,
+                this,
+                backMin,
+                backMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                this.dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+
+        
+    }
+    
+    public void setCameraPosition(Vector3f position) {
+        
+        for (int i = 0; i < 6; i++) {
+            if (surfaceSide[i] != null)
+                surfaceSide[i].setCameraPosition(position);
+        }
+        for (int i = 0; i < 6; i++) {
+            if (surfaceSide[i] != null)
+                surfaceSide[i].updateStitching();
+        }
+        
+    }
+    
+    public float getRadius() {
+        return this.baseRadius;
+    }
+     
+}
