@@ -23,7 +23,7 @@ import com.jme3.bounding.BoundingBox;
 import java.util.List;
 import java.util.ArrayList;
 import java.nio.IntBuffer;
-
+import java.nio.FloatBuffer;
 
 
 /**
@@ -31,24 +31,7 @@ import java.nio.IntBuffer;
  * @author aaron
  */
 public class Patch {
-    
-    public static final int STITCHING_NONE = 0;
-    public static final int STITCHING_W = 1;
-    public static final int STITCHING_N = 2;
-    public static final int STITCHING_WN = 3;
-    public static final int STITCHING_E = 4;
-    public static final int STITCHING_WE = 5;
-    public static final int STITCHING_NE = 6;
-    public static final int STITCHING_WNE = 7;
-    public static final int STITCHING_S = 8;
-    public static final int STITCHING_WS = 9;
-    public static final int STITCHING_NS = 10;
-    public static final int STITCHING_WNS = 11;
-    public static final int STITCHING_ES = 12;
-    public static final int STITCHING_WES = 13;
-    public static final int STITCHING_NES = 14;
-    public static final int STITCHING_WNES = 15;
-    
+       
     protected int quads;
     protected Vector3f min;
     protected Vector3f max;
@@ -61,12 +44,12 @@ public class Patch {
     protected HeightDataSource dataSource;
     protected int position;
     protected int padding = 2;
-    protected int[][] indexBuffer = new int[16][];
+    
     protected Mesh mesh;
     protected BoundingBox aabb;
     protected Vector3f center;
-    protected int stitchingMode = STITCHING_NONE;
     
+    protected int[] indexBuffer;
     protected int[] edgeVertexIndex;
    
     public Patch(
@@ -107,7 +90,7 @@ public class Patch {
         generateVertexNormals(vertexNormal, vertexPosition);
         
         // Load data into final buffers
-        int skirtVertexCount = (this.quads + 1) * (this.quads + 1);
+        int skirtVertexCount = this.quads * 4;
         int vertexCount = (this.quads + 1) * (this.quads + 1);
         
         Vector3f[] vertexData = new Vector3f[vertexCount + skirtVertexCount];
@@ -155,36 +138,47 @@ public class Patch {
         for (int i = 0; i < skirtVertexCount; i++)
         {
             
-            vertexData[indexSkirt] = vertexData[edgeVertexIndex[i]].subtract(this.center.normalize().mult(10f));
+            vertexData[indexSkirt] = vertexData[edgeVertexIndex[i]].subtract(this.center.normalize().mult(300f));
             
 
             normalData[indexSkirt] = vertexNormal[edgeVertexIndex[i]];
             
+            /*
             colorData[indexSkirt * 4 ] = colorData[edgeVertexIndex[i] * 4 ];
             colorData[indexSkirt * 4 +1] = colorData[edgeVertexIndex[i] * 4 +1];
             colorData[indexSkirt * 4 +2] = colorData[edgeVertexIndex[i] * 4 +2];
             colorData[indexSkirt * 4 +3] = colorData[edgeVertexIndex[i] * 4 +3];
+            
+             * 
+             */
+            colorData[indexSkirt * 4 ] = 1f;
+            colorData[indexSkirt * 4 +1] = 0;
+            colorData[indexSkirt * 4 +2] = 0;
+            colorData[indexSkirt * 4 +3] = 1f;
 
             indexSkirt++;         
         }
-
-        /*
-        for (int i = 0; i < vertexData.length; i++)
-            System.out.println(String.valueOf(i) + ": " + vertexData[i]);
-        */
+      
         generateIndices();
         
-        /*
-        for (int i = 0; i < indexBuffer[this.stitchingMode].length; i++)
-            System.out.println(String.valueOf(indexBuffer[this.stitchingMode][i]));
+//        System.out.println("vc: " + vertexData.length);
+//        for (int i = 0; i < vertexData.length; i++) {
+//            System.out.println(String.valueOf(i) + ": " + vertexData[i]);
+//        }
+//        
+//        System.out.println("ic: " + indexBuffer.length);
+//        for (int i = 0; i < indexBuffer.length; i+=3) {
+//            System.out.print(String.valueOf(indexBuffer[i]) + ",");
+//            System.out.print(String.valueOf(indexBuffer[i+1]) + ",");
+//            System.out.println(String.valueOf(indexBuffer[i+2]));
+//        }
         
-         * 
-         */
+
         // Set mesh buffers
         mesh.setBuffer(Type.Position, 3, BufferUtils.createFloatBuffer(vertexData));
         mesh.setBuffer(Type.Normal, 3, BufferUtils.createFloatBuffer(normalData));
         mesh.setBuffer(Type.Color, 4, BufferUtils.createFloatBuffer(colorData));
-        mesh.setBuffer(Type.Index, 3, BufferUtils.createIntBuffer(indexBuffer[0]));  
+        mesh.setBuffer(Type.Index, 3, BufferUtils.createIntBuffer(indexBuffer));  
         mesh.updateBound();
         
         //mesh.setMode(Mesh.Mode.Points);
@@ -200,37 +194,37 @@ public class Patch {
         int maxTriangles = (2 * quads * quads) + skirtTriangles;
         int triangles = maxTriangles;
         
-        indexBuffer[0] = new int[3 * triangles];
+        indexBuffer = new int[3 * triangles];
         
         int index = 0;
         for (int y = 0; y < quads; y++) {
             for (int x = 0; x < quads; x++) {
-                indexBuffer[0][index++] = y * (quads + 1) + x;
-                indexBuffer[0][index++] = (y + 1) * (quads + 1) + x;
-                indexBuffer[0][index++] = y * (quads + 1) + x + 1;
-                indexBuffer[0][index++] = (y + 1) * (quads + 1) + x;
-                indexBuffer[0][index++] = (y + 1) * (quads + 1) + x + 1;
-                indexBuffer[0][index++] = y * (quads + 1) + x + 1;
+                indexBuffer[index++] = y * (quads + 1) + x;
+                indexBuffer[index++] = (y + 1) * (quads + 1) + x;
+                indexBuffer[index++] = y * (quads + 1) + x + 1;
+                indexBuffer[index++] = (y + 1) * (quads + 1) + x;
+                indexBuffer[index++] = (y + 1) * (quads + 1) + x + 1;
+                indexBuffer[index++] = y * (quads + 1) + x + 1;
             }
         }  
         
-        int skirtOffset = edgeVertexIndex.length + 1;
+        int skirtOffset = (this.quads + 1) * (this.quads + 1);
         for (int y = 0; y < 1; y++) {
             for (int x = 0; x < edgeVertexIndex.length; x++) {
                 if (x != edgeVertexIndex.length - 1) {
-                    indexBuffer[0][index++] = edgeVertexIndex[x];
-                    indexBuffer[0][index++] = edgeVertexIndex[x  + 1];
-                    indexBuffer[0][index++] = x + skirtOffset;                
-                    indexBuffer[0][index++] = x + skirtOffset;
-                    indexBuffer[0][index++] = edgeVertexIndex[x + 1];       
-                    indexBuffer[0][index++] = x + 1 + skirtOffset;
+                    indexBuffer[index++] = edgeVertexIndex[x];
+                    indexBuffer[index++] = edgeVertexIndex[x  + 1];
+                    indexBuffer[index++] = x + skirtOffset;                
+                    indexBuffer[index++] = x + skirtOffset;
+                    indexBuffer[index++] = edgeVertexIndex[x + 1];       
+                    indexBuffer[index++] = x + 1 + skirtOffset;
                 } else {
-                    indexBuffer[0][index++] = edgeVertexIndex[x];
-                    indexBuffer[0][index++] = edgeVertexIndex[0];
-                    indexBuffer[0][index++] = x + skirtOffset;                
-                    indexBuffer[0][index++] = x + skirtOffset;
-                    indexBuffer[0][index++] = edgeVertexIndex[0];       
-                    indexBuffer[0][index++] = edgeVertexIndex.length + 1;
+                    indexBuffer[index++] = edgeVertexIndex[x];
+                    indexBuffer[index++] = edgeVertexIndex[0];
+                    indexBuffer[index++] = x + skirtOffset;                
+                    indexBuffer[index++] = x + skirtOffset;
+                    indexBuffer[index++] = edgeVertexIndex[0];       
+                    indexBuffer[index++] = skirtOffset;
                 }
                 
             }
@@ -252,20 +246,6 @@ public class Patch {
     
     public BoundingBox getAABB() {
         return this.aabb;
-    }
-    
-    public int getStitcthingMode() {
-        return this.stitchingMode;
-    }
-    
-    public void setStitcthingMode(int stitchingMode) {
-        if (this.stitchingMode != stitchingMode)
-        {
-            //this.mesh.clearBuffer(Type.Index);
-            //this.mesh.setBuffer(Type.Index, 3, BufferUtils.createIntBuffer(indexBuffer[this.stitchingMode]));
-            this.stitchingMode = stitchingMode;
-        }
-        
     }
     
     protected void generateVertexPositions(Vector3f[] vertexPosition, float[] vertexColor) {
@@ -479,639 +459,4 @@ public class Patch {
         
     }
         
-    protected void generateIndices(int quads) {
-        
-        int maxTriangles = 2 * quads * quads;
-
-        for (int i = 0; i < 16; i++) {
-            int triangles = maxTriangles;
-            switch(i) {
-                case STITCHING_NONE:
-                        break;
-                case STITCHING_W:
-                case STITCHING_N:
-                case STITCHING_E:
-                case STITCHING_S:
-                        triangles -= (quads / 2);
-                        break;
-                case STITCHING_WN:
-                case STITCHING_WE:
-                case STITCHING_WS:
-                case STITCHING_NE:
-                case STITCHING_NS:
-                case STITCHING_ES:
-                        triangles -= (2 * (quads / 2));
-                        break;
-                case STITCHING_WNE:
-                case STITCHING_WNS:
-                case STITCHING_WES:
-                case STITCHING_NES:
-                        triangles -= (3 * (quads / 2));
-                        break;
-                case STITCHING_WNES:
-                        triangles -= (4 * (quads / 2));
-                        break;
-            }
-
-            indexBuffer[i] = new int[3 * triangles];
-            int index = 0;
-
-            for (int y = 0; y < quads; y++) {
-                for (int x = 0; x < quads; x++) {
-                    if (
-                        i == STITCHING_NONE ||	// No stitching
-                        (x != 0 && x != (quads-1) && y != 0 && y != (quads-1)) || // interior quad, no stitching
-                        (i == STITCHING_W && x > 0) ||
-                        (i == STITCHING_N && y > 0) ||
-                        (i == STITCHING_E && x < (quads-1)) ||
-                        (i == STITCHING_S && y < (quads-1)) ||
-                        (i == STITCHING_WN && x > 0 && y > 0) ||
-                        (i == STITCHING_WE && x > 0 && x < (quads-1)) ||
-                        (i == STITCHING_WS && x > 0 && y < (quads-1)) ||
-                        (i == STITCHING_NE && x < (quads-1) && y > 0) ||
-                        (i == STITCHING_NS && y > 0 && y < (quads-1)) ||
-                        (i == STITCHING_ES && x < (quads-1) && y < (quads-1)) ||
-                        (i == STITCHING_WNE && x > 0 && x < (quads-1) && y > 0) ||
-                        (i == STITCHING_WNS && x > 0 && y > 0 && y < (quads-1)) ||
-                        (i == STITCHING_WES && x > 0 && x < (quads-1) && y < (quads-1)) ||
-                        (i == STITCHING_NES && x < (quads-1) && y > 0 && y < (quads-1)))
-                    {
-                        indexBuffer[i][index++] = y * (quads + 1) + x;
-                        indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                        indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                        indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                        indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                        indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                    }
-                    else if (i == STITCHING_W)
-                    {
-                        // x must be 0 here
-                        if (y % 2 == 0) {
-                            indexBuffer[i][index++] = y * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                        } else {
-                            // Only one triangle
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                        }
-                    }
-                    else if (i == STITCHING_N)
-                    {
-                        // y must be 0 here
-                        if (x % 2 == 0) {
-                            indexBuffer[i][index++] = y * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                        } else {
-                            // Only one triangle
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                        }
-                    }
-                    else if (i == STITCHING_E)
-                    {
-                        // x must be (quads-1) here
-                        if (y % 2 == 0) {
-                            indexBuffer[i][index++] = y * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                        } else {
-                            // Only one triangle
-                            indexBuffer[i][index++] = y * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                        }
-                    }
-                    else if (i == STITCHING_S)
-                    {
-                        // y must be (quads-1) here
-                        if (x % 2 == 0) {
-                            indexBuffer[i][index++] = y * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                        } else {
-                            // Only one triangle
-                            indexBuffer[i][index++] = y * (quads + 1) + x;
-                            indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                        }
-                    }
-                    else if (i == STITCHING_WN) {
-                        if (y == 0) {
-                            if (x == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == 0) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_WE) {
-                        if (x == 0) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == (quads - 1)) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_WS) {
-                        if (y == (quads-1)) {
-                            if (x == 0) {
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                                    indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else if (x % 2 == 0) {
-                                    indexBuffer[i][index++] = y * (quads + 1) + x;
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                    indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                    indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                            } else {
-                                    // Only one triangle
-                                    indexBuffer[i][index++] = y * (quads + 1) + x;
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                    indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == 0) {
-                            if (y % 2 == 0) {
-                                    indexBuffer[i][index++] = y * (quads + 1) + x;
-                                    indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                    indexBuffer[i][index++] = y * (quads + 1) + x;
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                    indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else {
-                                    // Only one triangle
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                    indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                    indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_NE) {
-                        if (y == 0) {
-                            if (x == (quads-1)) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == (quads-1)) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_NS) {
-                        if (y == 0) {
-                            if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (y == (quads-1)) {
-                            if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_ES) {
-                        if (y == (quads-1)) {
-                            if (x == (quads-1)) {
-                                // Do nothing
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == (quads-1)) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_WNE) {
-                        if (y == 0) {
-                            if (x == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else if (x == (quads-1)) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == 0) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == (quads-1)) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_WNS) {
-                        if (y == 0) {
-                            if (x == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (y == (quads-1)) {
-                            if (x == 0) {
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == 0) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_WES) {
-                        if (y == (quads-1)) {
-                            if (x == 0) {
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else if (x == (quads-1)) {
-                                    // Do nothing
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == 0) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == (quads-1)) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_NES) {
-                        if (y == 0) {
-                            if (x == (quads-1)) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (y == (quads-1)) {
-                            if (x == (quads-1)) {
-                                    // Do nothing
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == (quads-1)) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                    else if (i == STITCHING_WNES) {
-                        if (y == 0) {
-                            if (x == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else if (x == (quads-1)) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (y == (quads-1)) {
-                            if (x == 0) {
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else if (x == (quads-1)) {
-                                    // Do nothing
-                            } else if (x % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 2;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == 0) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                            }
-                        } else if (x == (quads-1)) {
-                            if (y % 2 == 0) {
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = y * (quads + 1) + x + 1;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 2) * (quads + 1) + x + 1;
-                            } else {
-                                // Only one triangle
-                                indexBuffer[i][index++] = y * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x;
-                                indexBuffer[i][index++] = (y + 1) * (quads + 1) + x + 1;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-    }
-    
-
-    
-
-    
 }

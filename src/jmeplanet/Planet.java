@@ -36,8 +36,6 @@ public class Planet extends Node {
     protected int maxDepth = 10;
     protected Quad[] surfaceSide = new Quad[6];
     protected HeightDataSource dataSource;
-    protected SortedSet<String> quadNameSet;
-    
     
     public Planet(AssetManager assetManager, float baseRadius) {
         
@@ -45,14 +43,11 @@ public class Planet extends Node {
         this.baseRadius = baseRadius;
         
         dataSource = new FractalDataSource();
-        quadNameSet = new TreeSet<String>();
-
 
         Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
         Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
         surfaceSide[0] = new Quad(
                 "SurfaceRight",
-                quadNameSet,
                 this.assetManager,
                 this,
                 rightMin,
@@ -75,7 +70,6 @@ public class Planet extends Node {
         Vector3f leftMax = new Vector3f(-1.0f, -1.0f, 1.0f);
         surfaceSide[1] = new Quad(
                 "SurfaceLeft",
-                quadNameSet,
                 this.assetManager,
                 this,
                 leftMin,
@@ -98,7 +92,6 @@ public class Planet extends Node {
         Vector3f topMax = new Vector3f(1.0f, 1.0f, 1.0f);
         surfaceSide[2] = new Quad(
                 "SurfaceTop",
-                quadNameSet,
                 this.assetManager,
                 this,
                 topMin,
@@ -121,7 +114,6 @@ public class Planet extends Node {
         Vector3f bottomMax = new Vector3f(1.0f, -1.0f, -1.0f);
         surfaceSide[3] = new Quad(
                 "SurfaceBottom",
-                quadNameSet,
                 this.assetManager,
                 this,
                 bottomMin,
@@ -140,12 +132,10 @@ public class Planet extends Node {
                 null,
                 0);
 
-        
         Vector3f frontMin = new Vector3f(-1.0f, 1.0f, 1.0f);
         Vector3f frontMax = new Vector3f(1.0f, -1.0f, 1.0f);
         surfaceSide[4] = new Quad(
                 "SurfaceFront",
-                quadNameSet,
                 this.assetManager,
                 this,
                 frontMin,
@@ -163,12 +153,11 @@ public class Planet extends Node {
                 this.maxDepth,
                 null,
                 0);
-
+        
         Vector3f backMin = new Vector3f(1.0f, 1.0f, -1.0f);
         Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
         surfaceSide[5] = new Quad(
                 "SurfaceBack",
-                quadNameSet,
                 this.assetManager,
                 this,
                 backMin,
@@ -186,7 +175,6 @@ public class Planet extends Node {
                 this.maxDepth,
                 null,
                 0);
-
         
     }
     
@@ -195,10 +183,6 @@ public class Planet extends Node {
         for (int i = 0; i < 6; i++) {
             if (surfaceSide[i] != null)
                 surfaceSide[i].setCameraPosition(position);
-        }
-        for (int i = 0; i < 6; i++) {
-            if (surfaceSide[i] != null)
-                surfaceSide[i].updateStitching();
         }
         
     }

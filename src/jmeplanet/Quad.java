@@ -30,7 +30,6 @@ import java.util.SortedSet;
 public class Quad {
     
     protected String name;
-    protected SortedSet<String> quadNameSet;
     protected AssetManager assetManager;
     protected Vector3f min;
     protected Vector3f max;
@@ -62,7 +61,6 @@ public class Quad {
     
     public Quad(
             String name,
-            SortedSet<String> quadNameSet,
             AssetManager assetManager,
             Node parentNode,
             Vector3f min,
@@ -82,7 +80,6 @@ public class Quad {
             int position) {
         
         this.name = name;
-        this.quadNameSet = quadNameSet;
         this.assetManager = assetManager;
         this.min = min;
         this.max = max;
@@ -119,44 +116,6 @@ public class Quad {
         this.aabb = this.patch.getAABB();
         if (this.depth == 0)
                 show();
-        
-        if (this.parentNode != null) {
-                leftNeighbour = getLeftNeighbourName(this.name);
-                if (this.name.contains("Top") && !leftNeighbour.contains("Top")) {
-                        leftNeighbour = rotateCCW(leftNeighbour);
-                } else if (this.name.contains("Bottom") && !leftNeighbour.contains("Bottom")) {
-                        leftNeighbour = rotateCW(leftNeighbour);
-                }
-
-                rightNeighbour = getRightNeighbourName(this.name);
-                if (this.name.contains("Top") && !this.rightNeighbour.contains("Top")) {
-                        rightNeighbour = rotateCW(rightNeighbour);
-                } else if (this.name.contains("Bottom") && !this.rightNeighbour.contains("Bottom")) {
-                        rightNeighbour = rotateCCW(rightNeighbour);
-                }
-
-                upNeighbour = getUpNeighbourName(this.name);
-                if (this.name.contains("Top") && !this.upNeighbour.contains("Top")) {
-                        upNeighbour = rotate180(upNeighbour);
-                } else if (this.name.contains("Left") && !this.upNeighbour.contains("Left")) {
-                        upNeighbour = rotateCW(upNeighbour);
-                } else if (this.name.contains("Right") && !this.upNeighbour.contains("Right")) {
-                        upNeighbour = rotateCCW(upNeighbour);
-                } else if (this.name.contains("Back") && !this.upNeighbour.contains("Back")) {
-                        upNeighbour = rotate180(upNeighbour);
-                }
-
-                downNeighbour = getDownNeighbourName(this.name);
-                if (this.name.contains("Bottom") && !this.downNeighbour.contains("Bottom")) {
-                        downNeighbour = rotate180(downNeighbour);
-                } else if (this.name.contains("Left") && !this.downNeighbour.contains("Left")) {
-                        downNeighbour = rotateCCW(downNeighbour);
-                } else if (this.name.contains("Right") && !this.downNeighbour.contains("Right")) {
-                        downNeighbour = rotateCW(downNeighbour);
-                } else if (this.name.contains("Back") && !this.downNeighbour.contains("Back")) {
-                        downNeighbour = rotate180(downNeighbour);
-                }
-        }
                      
     }
     
@@ -188,15 +147,7 @@ public class Quad {
                     this.subQuad[3] != null)) 
             {
                 
-                if (this.parentNode != null &&
-                        (!quadNameSet.contains(leftNeighbour) ||
-                        !quadNameSet.contains(rightNeighbour) ||
-                        !quadNameSet.contains(upNeighbour) ||
-                        !quadNameSet.contains(downNeighbour)))
-                {
-                        // Don't show children if it would cause a crack
-                        //return;
-                }
+
                 
                 
                 
@@ -247,11 +198,11 @@ public class Quad {
             System.out.println(this.name + " Show");
             this.quadGeometry = new Geometry(this.name + "Geometry", patch.getMesh());
             
-            Material mat = new Material(this.assetManager, "Common/MatDefs/Misc/Unshaded.j3md");            
-            //Material mat = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
+            //Material mat = new Material(this.assetManager, "Common/MatDefs/Misc/Unshaded.j3md");            
+            Material mat = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
             //mat.setColor("Color", ColorRGBA.White);
-            mat.setBoolean("VertexColor", true);
-            //mat.setBoolean("UseVertexColor", true);
+            //mat.setBoolean("VertexColor", true);
+            mat.setBoolean("UseVertexColor", true);
             //mat.getAdditionalRenderState().setWireframe(true);
             this.quadGeometry.setMaterial(mat);
         }
@@ -266,7 +217,6 @@ public class Quad {
            this.quadNode.attachChild(this.quadGeometry);
         }
         
-        this.quadNameSet.add(this.name);
     }
     
     public void hide()
@@ -280,8 +230,7 @@ public class Quad {
             this.quadNode.removeFromParent();
             this.quadNode = null;
         }
-        
-        this.quadNameSet.remove(this.name);
+
     }
     
     public boolean isPrepared() {
@@ -290,39 +239,6 @@ public class Quad {
     
     public boolean isLeaf() {
         return (this.subQuad[0] == null && this.subQuad[1] == null && this.subQuad[2] == null && this.subQuad[3] == null);
-    }
-    
-    public void updateStitching()
-    {
-        if (this.quadGeometry != null)
-        {
-            int index = 0;
-
-            if (parentNode != null) {
-                if (!quadNameSet.contains(leftNeighbour)) {
-                    index |= Patch.STITCHING_W;
-                }
-                if (!quadNameSet.contains(rightNeighbour)) {
-                    index |= Patch.STITCHING_E;
-                }
-                if (!quadNameSet.contains(upNeighbour)) {
-                    index |= Patch.STITCHING_N;
-                }
-                if (!quadNameSet.contains(downNeighbour)) {
-                    index |= Patch.STITCHING_S;
-                }
-            }
-
-            //patch.setStitcthingMode(index);
-
-        }
-
-        for (int i = 0; i < 4; i++) {
-            if (this.subQuad[i] != null) {
-                this.subQuad[i].updateStitching();
-            }
-        }
-
     }
     
     protected void prepareSubQuads() {
@@ -374,7 +290,6 @@ public class Quad {
             // "Upper left" quad
             this.subQuad[0] = new Quad(
                     this.name + "0",
-                    quadNameSet,
                     this.assetManager,
                     this.parentNode,
                     this.min,
@@ -399,7 +314,6 @@ public class Quad {
             // "Upper right" quad
             this.subQuad[1] = new Quad(
                     this.name + "1",
-                    quadNameSet,
                     this.assetManager,
                     this.parentNode,
                     topCenter,
@@ -424,7 +338,6 @@ public class Quad {
             // "Lower left" quad
             this.subQuad[2] = new Quad(
                     this.name + "2",
-                    quadNameSet,
                     this.assetManager,
                     this.parentNode,
                     leftCenter,
@@ -449,7 +362,6 @@ public class Quad {
             // "Lower right" quad
             this.subQuad[3] = new Quad(
                     this.name + "3",
-                    quadNameSet,
                     this.assetManager,
                     this.parentNode,
                     center,
@@ -468,214 +380,6 @@ public class Quad {
                     this,
                     3);
         }
-    }
-    
-    private String getLeftNeighbourName(String quadName)
-    {
-            if (quadName.endsWith("Front")) {
-                    return quadName.substring(0, quadName.length()-5) + "Left";
-            } else if (quadName.endsWith("Back")) {
-                    return quadName.substring(0, quadName.length()-4) + "Right";
-            } else if (quadName.endsWith("Left")) {
-                    return quadName.substring(0, quadName.length()-4) + "Back";
-            } else if (quadName.endsWith("Right")) {
-                    return quadName.substring(0, quadName.length()-5) + "Front";
-            } else if (quadName.endsWith("Top")) {
-                    return quadName.substring(0, quadName.length()-3) + "Left";
-            } else if (quadName.endsWith("Bottom")) {
-                    return quadName.substring(0, quadName.length()-6) + "Left";
-            }
-
-            int nameLength = quadName.length();
-            String parentName = quadName.substring(0, nameLength-1);
-
-            String idString = quadName.substring(nameLength-1, nameLength);
-            int id = Integer.valueOf(idString);
-
-            switch (id)
-            {
-            case 0:
-                    return getLeftNeighbourName(parentName) + "1";
-            case 1:
-                    return parentName + "0";
-            case 2:
-                    return getLeftNeighbourName(parentName) + "3";
-            case 3:
-                    return parentName + "2";
-            }
-
-            return null;
-    }
-
-    private String getRightNeighbourName(String quadName)
-    {
-            if (quadName.endsWith("Front")) {
-                    return quadName.substring(0, quadName.length()-5) + "Right";
-            } else if (quadName.endsWith("Back")) {
-                    return quadName.substring(0, quadName.length()-4) + "Left";
-            } else if (quadName.endsWith("Left")) {
-                    return quadName.substring(0, quadName.length()-4) + "Front";
-            } else if (quadName.endsWith("Right")) {
-                    return quadName.substring(0, quadName.length()-5) + "Back";
-            } else if (quadName.endsWith("Top")) {
-                    return quadName.substring(0, quadName.length()-3) + "Right";
-            } else if (quadName.endsWith("Bottom")) {
-                    return quadName.substring(0, quadName.length()-6) + "Right";
-            }
-
-            int nameLength = quadName.length();
-            String parentName = quadName.substring(0, nameLength-1);
-
-            String idString = quadName.substring(nameLength-1, nameLength);
-            int id = Integer.valueOf(idString);
-
-            switch (id)
-            {
-            case 0:
-                    return parentName + "1";
-            case 1:
-                    return getRightNeighbourName(parentName) + "0";
-            case 2:
-                    return parentName + "3";
-            case 3:
-                    return getRightNeighbourName(parentName) + "2";
-            }
-
-            return "";
-    }
-
-    private String getUpNeighbourName(String quadName)
-    {
-            if (quadName.endsWith("Front")) {
-                    return quadName.substring(0, quadName.length()-5) + "Top";
-            } else if (quadName.endsWith("Back")) {
-                    return quadName.substring(0, quadName.length()-4) + "Top";
-            } else if (quadName.endsWith("Left")) {
-                    return quadName.substring(0, quadName.length()-4) + "Top";
-            } else if (quadName.endsWith("Right")) {
-                    return quadName.substring(0, quadName.length()-5) + "Top";
-            } else if (quadName.endsWith("Top")) {
-                    return quadName.substring(0, quadName.length()-3) + "Back";
-            } else if (quadName.endsWith("Bottom")) {
-                    return quadName.substring(0, quadName.length()-6) + "Front";
-            }
-
-            int nameLength = quadName.length();
-            String parentName = quadName.substring(0, nameLength-1);
-
-            String idString = quadName.substring(nameLength-1, nameLength);
-            int id = Integer.valueOf(idString);
-
-            switch (id)
-            {
-            case 0:
-                    return getUpNeighbourName(parentName) + "2";
-            case 1:
-                    return getUpNeighbourName(parentName) + "3";
-            case 2:
-                    return parentName + "0";
-            case 3:
-                    return parentName + "1";
-            }
-
-            return "";
-    }
-
-    private String getDownNeighbourName(String quadName)
-    {
-            if (quadName.endsWith("Front")) {
-                    return quadName.substring(0, quadName.length()-5) + "Bottom";
-            } else if (quadName.endsWith("Back")) {
-                    return quadName.substring(0, quadName.length()-4) + "Bottom";
-            } else if (quadName.endsWith("Left")) {
-                    return quadName.substring(0, quadName.length()-4) + "Bottom";
-            } else if (quadName.endsWith("Right")) {
-                    return quadName.substring(0, quadName.length()-5) + "Bottom";
-            } else if (quadName.endsWith("Top")) {
-                    return quadName.substring(0, quadName.length()-3) + "Front";
-            } else if (quadName.endsWith("Bottom")) {
-                    return quadName.substring(0, quadName.length()-6) + "Back";
-            }
-
-            int nameLength = quadName.length();
-            String parentName = quadName.substring(0, nameLength-1);
-
-            if (parentName.equals(""))
-            {
-                    return "";
-            }
-
-            String idString = quadName.substring(nameLength-1, nameLength);
-            int id = Integer.valueOf(idString);
-
-            switch (id)
-            {
-            case 0:
-                    return parentName + "2";
-            case 1:
-                    return parentName + "3";
-            case 2:
-                    return getDownNeighbourName(parentName) + "0";
-            case 3:
-                    return getDownNeighbourName(parentName) + "1";
-            }
-
-            return "";
-    }
-    
-    private String rotateCW(String quadName)
-    {
-        if (quadName.endsWith("0")) {
-                return rotateCW(quadName.substring(0, quadName.length()-1)) + "1";
-        } else if (quadName.endsWith("1")) {
-                return rotateCW(quadName.substring(0, quadName.length()-1)) + "3";
-        } else if (quadName.endsWith("2")) {
-                return rotateCW(quadName.substring(0, quadName.length()-1)) + "0";
-        } else if (quadName.endsWith("3")) {
-                return rotateCW(quadName.substring(0, quadName.length()-1)) + "2";
-        }
-
-        return quadName;
-    }
-
-    private String rotateCCW(String quadName)
-    {
-        if (quadName.endsWith("0")) {
-                return rotateCCW(quadName.substring(0, quadName.length()-1)) + "2";
-        } else if (quadName.endsWith("1")) {
-                return rotateCCW(quadName.substring(0, quadName.length()-1)) + "0";
-        } else if (quadName.endsWith("2")) {
-                return rotateCCW(quadName.substring(0, quadName.length()-1)) + "3";
-        } else if (quadName.endsWith("3")) {
-                return rotateCCW(quadName.substring(0, quadName.length()-1)) + "1";
-        }
-
-        return quadName;
-    }
-
-    private String rotate180(String quadName)
-    {
-        if (quadName.endsWith("0")) {
-                return rotate180(quadName.substring(0, quadName.length()-1)) + "3";
-        } else if (quadName.endsWith("1")) {
-                return rotate180(quadName.substring(0, quadName.length()-1)) + "2";
-        } else if (quadName.endsWith("2")) {
-                return rotate180(quadName.substring(0, quadName.length()-1)) + "1";
-        } else if (quadName.endsWith("3")) {
-                return rotate180(quadName.substring(0, quadName.length()-1)) + "0";
-        }
-
-        return quadName;
-    }
-    
-    private boolean findQuadName(String quadName) {
-        java.util.Iterator<String> itr = quadNameSet.iterator();
-        while (itr.hasNext()) {
-            String i = itr.next();
-                if (quadName.equals(i))
-                        return true;
-        }
-        return false;    
     }
 
 }
