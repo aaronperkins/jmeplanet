@@ -6,6 +6,7 @@ import com.jme3.scene.Mesh;
 import com.jme3.scene.VertexBuffer.Type;
 import com.jme3.util.BufferUtils;
 import com.jme3.bounding.BoundingBox;
+import com.jme3.math.ColorRGBA;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -69,14 +70,16 @@ public class Patch {
         Vector3f[] vertexPosition = new Vector3f[quadVertexCountPadded];
         float[] vertexColor = new float[4 * quadVertexCountPadded];
         Vector3f[] vertexNormal = new Vector3f[quadVertexCount];
+        Vector2f[] textureCoordinate = new Vector2f[quadVertexCount];
         
         generateVertexPositions(vertexPosition, vertexColor);
-        generateVertexNormals(vertexNormal, vertexPosition);
+        generateVertexNormals(vertexNormal, textureCoordinate, vertexPosition);
         
         // Create final buffers
         FloatBuffer vertexBuffer = BufferUtils.createFloatBuffer(3 * totalVertexCount);
         FloatBuffer colorBuffer = BufferUtils.createFloatBuffer((4 * totalVertexCount));
         FloatBuffer normalBuffer = BufferUtils.createFloatBuffer(3 * totalVertexCount);
+        FloatBuffer textureBuffer = BufferUtils.createFloatBuffer(4 * quadVertexCount);
         IntBuffer indexBuffer = BufferUtils.createIntBuffer(3 * totalTriangles);
         // Fill final buffers
         for (int y = 0; y < (this.quads + 1); y++)
@@ -99,6 +102,11 @@ public class Patch {
                 normalBuffer.put(vertexNormal[ni].x);
                 normalBuffer.put(vertexNormal[ni].y);
                 normalBuffer.put(vertexNormal[ni].z);
+                // Texture coordinates (this is global planet texture coordinates)
+                textureBuffer.put(textureCoordinate[ni].x);
+                textureBuffer.put(textureCoordinate[ni].y);
+                textureBuffer.put((x == 0 ? 0.0f : (x == this.quads ? 1.0f : 0.5f)));
+                textureBuffer.put((y == 0 ? 0.0f : (y == this.quads ? 1.0f : 0.5f)));
             }
         }
         
@@ -134,6 +142,12 @@ public class Patch {
             colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 1));
             colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 2));
             colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 3));
+            
+            //textureBuffer.put(textureBuffer.get(edgeVertexIndex[i] * 4));
+            //textureBuffer.put(textureBuffer.get(edgeVertexIndex[i] * 4 + 1));
+            //textureBuffer.put(textureBuffer.get(edgeVertexIndex[i] * 4 + 2));
+            //textureBuffer.put(textureBuffer.get(edgeVertexIndex[i] * 4 + 3));
+            
         }
       
         generateIndices(indexBuffer, edgeVertexIndex);
@@ -142,6 +156,7 @@ public class Patch {
         mesh = new Mesh();
         mesh.setBuffer(Type.Position, 3, vertexBuffer);
         mesh.setBuffer(Type.Normal, 3, normalBuffer);
+        mesh.setBuffer(Type.TexCoord, 4, textureBuffer);
         mesh.setBuffer(Type.Color, 4, colorBuffer);
         mesh.setBuffer(Type.Index, 3, indexBuffer);  
         mesh.updateBound();
@@ -286,7 +301,15 @@ public class Patch {
                 
                 int index = (this.quads + 2*this.padding + 1) * y + x;
  
+                // vertex position with height added
                 vertexPosition[index] = unitSpherePos[index].mult(baseRadius + heightData[index] * scalingFactor);
+                
+                // vertex color
+                ColorRGBA color = getHeightColor(heightData[index], this.dataSource.getHeightScale());
+                vertexColor[index * 4   ] = color.r;
+                vertexColor[index * 4 +1] = color.g;
+                vertexColor[index * 4 +2] = color.b;
+                vertexColor[index * 4 +3] = color.a;
 
                 minBounds.x = Math.min(minBounds.x, vertexPosition[index].x);
                 minBounds.y = Math.min(minBounds.y, vertexPosition[index].y);
@@ -294,30 +317,7 @@ public class Patch {
                 maxBounds.x = Math.max(maxBounds.x, vertexPosition[index].x);
                 maxBounds.y = Math.max(maxBounds.y, vertexPosition[index].y);
                 maxBounds.z = Math.max(maxBounds.z, vertexPosition[index].z);
-                
-                // Set vertex colors
-                if( heightData[index] <= 0f ) {
-                    vertexColor[index * 4 ]=(0.0f);
-                    vertexColor[index * 4 +1]=(0.4f);
-                    vertexColor[index * 4 +2]=(0.8f);
-                    vertexColor[index * 4 +3]=(1.0f); // Ocean
-                } else if( heightData[index] <= 15f ) {
-                    vertexColor[index * 4 ]=(0.83f);
-                    vertexColor[index * 4 +1]=(0.72f);
-                    vertexColor[index * 4 +2]=(0.34f);
-                    vertexColor[index * 4 +3]=(1.0f); // Sand
-                } else if( heightData[index] <= 125f ) {
-                    vertexColor[index * 4 ]=(0.2f);
-                    vertexColor[index * 4 +1]=(0.6f);
-                    vertexColor[index * 4 +2]=(0.1f);
-                    vertexColor[index * 4 +3]=(1.0f); // Grass
-                } else { 
-                    vertexColor[index * 4 ]=(0.5f);
-                    vertexColor[index * 4 +1]=(0.5f);
-                    vertexColor[index * 4 +2]=(0.5f);
-                    vertexColor[index * 4 +3]=(1.0f); // Mountains
-                }
-                
+                    
             }
         }
         
@@ -337,7 +337,7 @@ public class Patch {
         
     }
     
-    protected void generateVertexNormals(Vector3f[] vertexNormal, Vector3f[] vertexPosition) {
+    protected void generateVertexNormals(Vector3f[] vertexNormal, Vector2f[] textureCoordinate, Vector3f[] vertexPosition) {
        
         // Calculate vertex normals
         for (int y = 0; y < (this.quads + 1); y++)
@@ -371,13 +371,20 @@ public class Patch {
                 Vector3f n6 = nextYVertex.subtract(thisVertex).cross(nextXVertex.subtract(thisVertex));
 
                 vertexNormal[index] = (n1.add(n2).add(n3).add(n4).add(n5).add(n6)).normalize();
+                
+                // Texture coordinates (this is global planet texture coordinates)
+                float jx = (float)x / this.quads;
+                float jy = (float)y / this.quads;
+                textureCoordinate[index] = new Vector2f(
+                        (1 - jx) * this.texXMin + jx * this.texXMax, 
+                        (1 - jy) * this.texYMin + jy * this.texYMax);
+                
             }
         }
         
     }
     
     protected void generateIndices(IntBuffer indexBuffer, int[] edgeVertexIndex) {
-        
         for (int y = 0; y < quads; y++) {
             for (int x = 0; x < quads; x++) {
                 indexBuffer.put(y * (quads + 1) + x);
@@ -410,7 +417,34 @@ public class Patch {
                 
             }
         }
+    }
+    
+    protected ColorRGBA getHeightColor(float height, float heightScale) {
+        ColorRGBA color = new ColorRGBA();
         
+        if( height <= 0f ) {
+            color.r=0.0f;
+            color.g=0.4f;
+            color.b=0.8f;
+            color.a=1.0f; // Ocean
+        } else if( height <= heightScale * .1f ) {
+            color.r=0.83f;
+            color.g=0.72f;
+            color.b=0.34f;
+            color.a=1.0f; // Sand
+        } else if( height <= heightScale * .83f ) {
+            color.r=0.2f;
+            color.g=0.6f;
+            color.b=0.1f;
+            color.a=1.0f; // Grass
+        } else { 
+            color.r=0.5f;
+            color.g=0.5f;
+            color.b=0.5f;
+            color.a=1.0f; // Mountains
+        }
+        
+        return color;
     }
         
 }

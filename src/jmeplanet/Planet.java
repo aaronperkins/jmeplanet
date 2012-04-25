@@ -11,7 +11,7 @@ public class Planet extends Node {
     protected float baseRadius = 50.0f;
     protected float scalingFactor = 1f;
     protected int quads = 16;
-    protected int minDepth = 0;
+    protected int minDepth = 1;
     protected int maxDepth = 10;
     protected Quad[] surfaceSide = new Quad[6];
     protected HeightDataSource dataSource;
@@ -113,7 +113,29 @@ public class Planet extends Node {
                 this.maxDepth,
                 null,
                 0);
-
+      
+        Vector3f backMin = new Vector3f(1.0f, 1.0f, -1.0f);
+        Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
+        surfaceSide[5] = new Quad(
+                "SurfaceBack",
+                this.assetManager,
+                this,
+                backMin,
+                backMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                this.dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+        
         Vector3f frontMin = new Vector3f(-1.0f, 1.0f, 1.0f);
         Vector3f frontMax = new Vector3f(1.0f, -1.0f, 1.0f);
         surfaceSide[4] = new Quad(
@@ -136,27 +158,6 @@ public class Planet extends Node {
                 null,
                 0);
         
-        Vector3f backMin = new Vector3f(1.0f, 1.0f, -1.0f);
-        Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
-        surfaceSide[5] = new Quad(
-                "SurfaceBack",
-                this.assetManager,
-                this,
-                backMin,
-                backMax,
-                0f,
-                FastMath.pow(2.0f, 20f),
-                0f,
-                FastMath.pow(2.0f, 20f),
-                this.baseRadius,
-                this.scalingFactor,
-                this.dataSource,
-                this.quads,
-                0,
-                this.minDepth,
-                this.maxDepth,
-                null,
-                0);
         
     }
     

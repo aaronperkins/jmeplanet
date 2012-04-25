@@ -154,10 +154,11 @@ public class Quad {
             this.quadGeometry = new Geometry(this.name + "Geometry", patch.getMesh());
             
             //Material mat = new Material(this.assetManager, "Common/MatDefs/Misc/Unshaded.j3md");            
-            Material mat = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
+            //Material mat = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
+            Material mat = assetManager.loadMaterial("Materials/grass.j3m");
             //mat.setColor("Color", ColorRGBA.White);
             //mat.setBoolean("VertexColor", true);
-            mat.setBoolean("UseVertexColor", true);
+            //mat.setBoolean("UseVertexColor", true);
             //mat.getAdditionalRenderState().setWireframe(true);
             this.quadGeometry.setMaterial(mat);
         }
