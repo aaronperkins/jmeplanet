@@ -1,13 +1,13 @@
 package jmeplanet;
 
-import com.jme3.asset.AssetManager;
+import com.jme3.material.Material;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
 
 public class Planet extends Node {
     
-    protected AssetManager assetManager;
+    protected Material material;
     protected float baseRadius = 50.0f;
     protected float scalingFactor = 1f;
     protected int quads = 16;
@@ -15,22 +15,18 @@ public class Planet extends Node {
     protected int maxDepth = 10;
     protected Quad[] surfaceSide = new Quad[6];
     protected HeightDataSource dataSource;
-    protected float heightScale;
     
-    public Planet(AssetManager assetManager, float baseRadius, float heightScale) {
-        
-        this.assetManager = assetManager;
+    public Planet(String name, float baseRadius, Material material, HeightDataSource dataSource) {
+        super(name);
+        this.material = material;
         this.baseRadius = baseRadius;
-        this.heightScale = heightScale;
+        this.dataSource = dataSource;
         
-        dataSource = new FractalDataSource();
-        dataSource.setHeightScale(this.heightScale);
-
         Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
         Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
         surfaceSide[0] = new Quad(
                 "SurfaceRight",
-                this.assetManager,
+                this.material,
                 this,
                 rightMin,
                 rightMax,
@@ -52,7 +48,7 @@ public class Planet extends Node {
         Vector3f leftMax = new Vector3f(-1.0f, -1.0f, 1.0f);
         surfaceSide[1] = new Quad(
                 "SurfaceLeft",
-                this.assetManager,
+                this.material,
                 this,
                 leftMin,
                 leftMax,
@@ -74,7 +70,7 @@ public class Planet extends Node {
         Vector3f topMax = new Vector3f(1.0f, 1.0f, 1.0f);
         surfaceSide[2] = new Quad(
                 "SurfaceTop",
-                this.assetManager,
+                this.material,
                 this,
                 topMin,
                 topMax,
@@ -96,7 +92,7 @@ public class Planet extends Node {
         Vector3f bottomMax = new Vector3f(1.0f, -1.0f, -1.0f);
         surfaceSide[3] = new Quad(
                 "SurfaceBottom",
-                this.assetManager,
+                this.material,
                 this,
                 bottomMin,
                 bottomMax,
@@ -118,7 +114,7 @@ public class Planet extends Node {
         Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
         surfaceSide[5] = new Quad(
                 "SurfaceBack",
-                this.assetManager,
+                this.material,
                 this,
                 backMin,
                 backMax,
@@ -140,7 +136,7 @@ public class Planet extends Node {
         Vector3f frontMax = new Vector3f(1.0f, -1.0f, 1.0f);
         surfaceSide[4] = new Quad(
                 "SurfaceFront",
-                this.assetManager,
+                this.material,
                 this,
                 frontMin,
                 frontMax,
@@ -175,7 +171,7 @@ public class Planet extends Node {
     }
     
     public float getHeightScale() {
-        return this.heightScale;
+        return dataSource.getHeightScale();
     }
      
 }

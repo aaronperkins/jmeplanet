@@ -1,8 +1,0 @@
-Material grass : Common/MatDefs/Light/Lighting.j3md {
-     MaterialParameters {
-        DiffuseMap : Repeat Textures/grass.jpg
-        UseVertexColor : false
-     }
-    AdditionalRenderState {
-    }
-}

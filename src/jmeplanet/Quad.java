@@ -1,6 +1,5 @@
 package jmeplanet;
 
-import com.jme3.asset.AssetManager;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Node;
@@ -12,7 +11,7 @@ import com.jme3.terrain.heightmap.AbstractHeightMap;
 public class Quad {
     
     protected String name;
-    protected AssetManager assetManager;
+    Material material;
     protected Vector3f min;
     protected Vector3f max;
     protected float texXMin;
@@ -39,7 +38,7 @@ public class Quad {
     
     public Quad(
             String name,
-            AssetManager assetManager,
+            Material material,
             Node parentNode,
             Vector3f min,
             Vector3f max,
@@ -58,7 +57,7 @@ public class Quad {
             int position) {
         
         this.name = name;
-        this.assetManager = assetManager;
+        this.material = material.clone();
         this.min = min;
         this.max = max;
         this.texXMin = texXMin;
@@ -152,15 +151,9 @@ public class Quad {
         if (this.quadGeometry == null) {
             System.out.println(this.name + " Show");
             this.quadGeometry = new Geometry(this.name + "Geometry", patch.getMesh());
-            
-            //Material mat = new Material(this.assetManager, "Common/MatDefs/Misc/Unshaded.j3md");            
-            //Material mat = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
-            Material mat = assetManager.loadMaterial("Materials/grass.j3m");
-            //mat.setColor("Color", ColorRGBA.White);
-            //mat.setBoolean("VertexColor", true);
-            //mat.setBoolean("UseVertexColor", true);
-            //mat.getAdditionalRenderState().setWireframe(true);
-            this.quadGeometry.setMaterial(mat);
+            this.material.setVector3("patchCenter", this.quadCenter);
+            this.material.setFloat("planetRadius", this.baseRadius);
+            this.quadGeometry.setMaterial(this.material);
         }
         
         if (this.quadNode == null) {
@@ -247,7 +240,7 @@ public class Quad {
             // "Upper left" quad
             this.subQuad[0] = new Quad(
                     this.name + "0",
-                    this.assetManager,
+                    this.material,
                     this.parentNode,
                     this.min,
                     center,
@@ -271,7 +264,7 @@ public class Quad {
             // "Upper right" quad
             this.subQuad[1] = new Quad(
                     this.name + "1",
-                    this.assetManager,
+                    this.material,
                     this.parentNode,
                     topCenter,
                     rightCenter,
@@ -295,7 +288,7 @@ public class Quad {
             // "Lower left" quad
             this.subQuad[2] = new Quad(
                     this.name + "2",
-                    this.assetManager,
+                    this.material,
                     this.parentNode,
                     leftCenter,
                     bottomCenter,
@@ -319,7 +312,7 @@ public class Quad {
             // "Lower right" quad
             this.subQuad[3] = new Quad(
                     this.name + "3",
-                    this.assetManager,
+                    this.material,
                     this.parentNode,
                     center,
                     this.max,
