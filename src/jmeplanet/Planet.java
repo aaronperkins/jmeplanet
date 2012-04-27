@@ -10,7 +10,7 @@ public class Planet extends Node {
     protected Material material;
     protected float baseRadius = 50.0f;
     protected float scalingFactor = 1f;
-    protected int quads = 16;
+    protected int quads = 32;
     protected int minDepth = 1;
     protected int maxDepth = 10;
     protected Quad[] surfaceSide = new Quad[6];

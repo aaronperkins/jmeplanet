@@ -1,5 +1,6 @@
 package jmeplanet;
 
+import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 
 public class FractalDataSource implements HeightDataSource {
@@ -50,17 +51,17 @@ public class FractalDataSource implements HeightDataSource {
         
         this.octaves = new Octave[this.octaveCount];
         float curPersistence = 1.0f;
-        int seed;
-        float scale = this.frequency;
+        int oSeed;
+        float oScale = this.frequency;
         for (int o=0;o<this.octaveCount;++o)
         {
-                seed = (this.seed + o) & 0xffffffff;
+                oSeed = (this.seed + o) & 0xffffffff;
                 this.octaves[o] = new Octave();
                 this.octaves[o].persistence = curPersistence;
-                this.octaves[o].scale = scale;
-                this.octaves[o].seed = seed;
+                this.octaves[o].scale = oScale;
+                this.octaves[o].seed = oSeed;
 
-                scale *= lacunarity;
+                oScale *= lacunarity;
                 curPersistence *= persistence;
         }
 
@@ -88,7 +89,8 @@ public class FractalDataSource implements HeightDataSource {
                 value += signal * this.octaves[o].persistence;
         }
         
-        return value * heightScale;
+        // return value, shifting to positive scale and clamping between 0 and 1
+        return FastMath.clamp((value + 1.0f) / 2.0f,0.0f,1.0f) * heightScale;
     }
     
     private float calculateGradient (float x, float y, float z, int seed)

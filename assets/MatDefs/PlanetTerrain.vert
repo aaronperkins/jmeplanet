@@ -3,8 +3,6 @@ uniform mat4 g_WorldViewProjectionMatrix;
 uniform mat4 g_WorldMatrix;
 uniform mat3 g_NormalMatrix;
 
-uniform float m_terrainSize;
-
 attribute vec2 inTexCoord;
 attribute vec3 inNormal;
 attribute vec3 inPosition;

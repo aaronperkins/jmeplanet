@@ -7,28 +7,23 @@ MaterialDef Terrain {
         //      regionX.y: the end height of the region
         //      regionX.z: the texture scale for the region
         //  it might not be the most elegant way for storing these 3 values, but it packs the data nicely :)
-        // slopeColorMap: the texture to be used for cliffs, and steep mountain sites
-        // slopeTileFactor: the texture scale for slopes
-        // terrainSize: the total size of the terrain (used for scaling the texture)
 	MaterialParameters {
 		Texture2D region1ColorMap
 		Texture2D region2ColorMap
 		Texture2D region3ColorMap
 		Texture2D region4ColorMap
-		Texture2D slopeColorMap
-		Float slopeTileFactor
-		Float terrainSize
 		Vector3 region1
 		Vector3 region2
 		Vector3 region3
 		Vector3 region4
+                Vector4 baseColor
                 Vector3 patchCenter
                 Float planetRadius
 	}
 
 	Technique {
-		VertexShader GLSL100:   MatDefs/HeightBasedTerrain.vert
-		FragmentShader GLSL100: MatDefs/HeightBasedTerrain.frag
+		VertexShader GLSL100:   MatDefs/PlanetTerrain.vert
+		FragmentShader GLSL100: MatDefs/PlanetTerrain.frag
 
 		WorldParameters {
 			WorldViewProjectionMatrix
