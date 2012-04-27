@@ -1,7 +1,5 @@
 package jmeplanet.test;
 
-
-
 import com.jme3.app.SimpleApplication;
 import com.jme3.system.AppSettings;
 import com.jme3.texture.Texture;
@@ -64,11 +62,11 @@ public class App extends SimpleApplication {
         rootNode.addLight(sun);
         
         // Create height data source
-        FractalDataSource dataSource = new FractalDataSource();
+        FractalDataSource dataSource = new FractalDataSource(34354);
         dataSource.setHeightScale(250f);
 
          // Terrain material
-        Material planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
+        planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
         planetMaterial.getAdditionalRenderState().setWireframe(false);
         
         // base color ( underwater )
@@ -87,12 +85,17 @@ public class App extends SimpleApplication {
         Texture rock = this.assetManager.loadTexture("Textures/rock.jpg");
         rock.setWrap(WrapMode.Repeat);
         planetMaterial.setTexture("region3ColorMap", rock);
-        planetMaterial.setVector3("region3", new Vector3f(210, 240, 0));
+        planetMaterial.setVector3("region3", new Vector3f(210, 340, 0));
         // snow
         Texture snow = this.assetManager.loadTexture("Textures/snow.jpg");
         snow.setWrap(WrapMode.Repeat);
         planetMaterial.setTexture("region4ColorMap", snow);
-        planetMaterial.setVector3("region4", new Vector3f(235, 255, 0));
+        planetMaterial.setVector3("region4", new Vector3f(235, 375, 0));
+        
+        //planetMaterial = new Material(this.assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        //planetMaterial.setBoolean("VertexColor", true);
+        //planetMaterial = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        //planetMaterial.setBoolean("UseVertexColor", true);
 
         // add planet
         planet = new Planet("Planet", 5000f, planetMaterial, dataSource);
@@ -123,7 +126,7 @@ public class App extends SimpleApplication {
     private ActionListener actionListener = new ActionListener(){
         public void onAction(String name, boolean pressed, float tpf){
                         
-            if (name == "TOGGLE_CURSOR" && !pressed) {
+            if (name.equals("TOGGLE_CURSOR") && !pressed) {
                 if (inputManager.isCursorVisible()) {
                     inputManager.setCursorVisible(false);
                 } else {
@@ -131,10 +134,9 @@ public class App extends SimpleApplication {
                 }
             }
             
-            if (name == "TOGGLE_WIREFRAME" && !pressed) {
+            if (name.equals("TOGGLE_WIREFRAME") && !pressed) {
                     planet.toogleWireframe();
             }
-            
             
         }
     };
