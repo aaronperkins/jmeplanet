@@ -16,6 +16,8 @@ public class Planet extends Node {
     protected Quad[] surfaceSide = new Quad[6];
     protected HeightDataSource dataSource;
     
+    protected boolean wireframeMode;
+    
     public Planet(String name, float baseRadius, Material material, HeightDataSource dataSource) {
         super(name);
         this.material = material;
@@ -172,6 +174,20 @@ public class Planet extends Node {
     
     public float getHeightScale() {
         return dataSource.getHeightScale();
+    }
+    
+    public void toogleWireframe() {
+        
+        if (this.wireframeMode)
+            wireframeMode = false;
+        else
+            wireframeMode = true;
+        
+        for (int i = 0; i < 6; i++) {
+            if (surfaceSide[i] != null)
+                surfaceSide[i].setWireframe(wireframeMode);
+        }
+        
     }
      
 }

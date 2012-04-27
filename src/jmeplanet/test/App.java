@@ -132,7 +132,7 @@ public class App extends SimpleApplication {
             }
             
             if (name == "TOGGLE_WIREFRAME" && !pressed) {
-  
+                    planet.toogleWireframe();
             }
             
             

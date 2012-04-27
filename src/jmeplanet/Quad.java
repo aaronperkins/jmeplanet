@@ -191,6 +191,17 @@ public class Quad {
         return (this.subQuad[0] == null && this.subQuad[1] == null && this.subQuad[2] == null && this.subQuad[3] == null);
     }
     
+    public void setWireframe(boolean value) {
+        if (this.quadGeometry != null)
+            this.material.getAdditionalRenderState().setWireframe(value);
+        
+        for (int i = 0; i < 4; i++) {
+            if (this.subQuad[i] != null) {
+                this.subQuad[i].setWireframe(value);
+            }
+        } 
+    }
+    
     protected void prepareSubQuads() {
         
         Vector3f center = new Vector3f(
@@ -229,10 +240,6 @@ public class Quad {
             bottomCenter = new Vector3f(center.x, this.max.y, this.max.z);
             leftCenter = new Vector3f(this.min.x, center.y, this.min.z);
             rightCenter = new Vector3f(this.max.x, center.y, this.max.z);
-        }
-        else
-        {
-                //assert(false);
         }
         
         if (this.subQuad[0] == null)
