@@ -13,6 +13,7 @@ import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.FastMath;
 
 
 import jmeplanet.Planet;
@@ -52,9 +53,8 @@ public class App extends SimpleApplication {
         inputManager.addListener(actionListener, "TOGGLE_WIREFRAME"); 
         
         // Setup camera
-        this.getCamera().setFrustumFar(20000f);
-        this.getCamera().setLocation(new Vector3f(0f, 0f, 9000f));
-        this.getFlyByCamera().setMoveSpeed(1000.0f);
+        this.getCamera().setFrustumFar(200000f);
+        this.getCamera().setLocation(new Vector3f(0f, 0f, 20000f));
         
         // Add sun
         DirectionalLight sun = new DirectionalLight();
@@ -62,12 +62,11 @@ public class App extends SimpleApplication {
         rootNode.addLight(sun);
         
         // Create height data source
-        FractalDataSource dataSource = new FractalDataSource(34354);
+        FractalDataSource dataSource = new FractalDataSource(33354);
         dataSource.setHeightScale(250f);
 
          // Terrain material
         planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
-        planetMaterial.getAdditionalRenderState().setWireframe(false);
         
         // base color ( underwater )
         planetMaterial.setColor("baseColor", new ColorRGBA(0.1f,0.3f,0.8f,1.0f));
@@ -98,7 +97,7 @@ public class App extends SimpleApplication {
         //planetMaterial.setBoolean("UseVertexColor", true);
 
         // add planet
-        planet = new Planet("Planet", 5000f, planetMaterial, dataSource);
+        planet = new Planet("Planet", 10000f, planetMaterial, dataSource);
         PlanetController planetController = new PlanetController(planet, this.getCamera());
         planet.addControl(planetController);
         rootNode.attachChild(planet);
@@ -108,7 +107,7 @@ public class App extends SimpleApplication {
     
     @Override
     public void simpleUpdate(float tpf) {
-        planet.rotate(0, 0.005f*tpf, 0); 
+        //planet.rotate(0, 0.005f*tpf, 0); 
         
         //simple collision detection
         Vector3f cameraLocation = this.getCamera().getLocation();        
@@ -116,9 +115,10 @@ public class App extends SimpleApplication {
         float cameraHeight = planetToCamera.length();
         float r = planet.getRadius();
         float hs = planet.getHeightScale();
-        float minHeight = (r + hs + 1f);
+        float minHeight = (r + hs / 2 + 1f);
+        this.getFlyByCamera().setMoveSpeed(FastMath.clamp(cameraHeight - minHeight, 25, 2000));
         if (cameraHeight < minHeight) {
-            this.getCamera().setLocation(planet.getLocalTranslation().add(planetToCamera.normalize().mult(minHeight)));
+            //this.getCamera().setLocation(planet.getLocalTranslation().add(planetToCamera.normalize().mult(minHeight)));
         }
         
     }

@@ -178,7 +178,6 @@ public class Quad {
     public void show()
     {
         if (this.quadGeometry == null) {
-            System.out.println(this.name + " Show");
             this.quadGeometry = new Geometry(this.name + "Geometry", patch.getMesh());
             
             if (this.material.getMaterialDef().getMaterialParam("patchCenter") != null)
@@ -205,7 +204,6 @@ public class Quad {
     public void hide()
     {
         if (this.quadGeometry != null) {
-            System.out.println(this.name + " Hide");
             this.quadGeometry.removeFromParent();
             this.quadGeometry = null;
         }
