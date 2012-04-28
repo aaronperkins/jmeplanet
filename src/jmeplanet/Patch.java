@@ -52,11 +52,21 @@ public class Patch {
     protected float scalingFactor;
     protected HeightDataSource dataSource;
     protected int position;
+    protected boolean skirting;
     
     protected int padding = 2;
     protected Mesh mesh;
     protected BoundingBox aabb;
     protected Vector3f center;
+    protected int quadVertexCount;
+    protected int quadVertexCountPadded;
+    protected int skirtVertexCount;
+    protected int totalVertexCount;
+    protected int verticesPerSide;
+    protected int quadTriangles;
+    protected int skirtTriangles;
+    protected int totalTriangles;
+    protected int[] edgeVertexIndex;
    
     public Patch(
             int quads,
@@ -69,7 +79,8 @@ public class Patch {
             float baseRadius,
             float scalingFactor,
             HeightDataSource dataSource,
-            int position) {
+            int position,
+            boolean skirting) {
         
         this.quads = quads;
         this.min = min;
@@ -82,18 +93,19 @@ public class Patch {
         this.scalingFactor = scalingFactor;
         this.dataSource = dataSource;
         this.position = position;
+        this.skirting = skirting;
     }
     
     public Mesh prepare() {
         
-        int quadVertexCount = (this.quads + 1) * (this.quads + 1);
-        int quadVertexCountPadded = (this.quads + 2*this.padding + 1) * (this.quads + 2*this.padding + 1);
-        int skirtVertexCount = this.quads * 4;
-        int totalVertexCount = quadVertexCount + skirtVertexCount;
-        int verticesPerSide = this.quads + 1;
-        int quadTriangles = (2 * quads * quads);
-        int skirtTriangles = skirtVertexCount * 2;
-        int totalTriangles = quadTriangles + skirtTriangles;
+        this.quadVertexCount = (this.quads + 1) * (this.quads + 1);
+        this.quadVertexCountPadded = (this.quads + 2*this.padding + 1) * (this.quads + 2*this.padding + 1);
+        this.skirtVertexCount = this.quads * 4;
+        this.totalVertexCount = quadVertexCount + skirtVertexCount;
+        this.verticesPerSide = this.quads + 1;
+        this.quadTriangles = (2 * quads * quads);
+        this.skirtTriangles = skirtVertexCount * 2;
+        this.totalTriangles = quadTriangles + skirtTriangles;
 
         // Calculate vertex positions, normals, etc
         Vector3f[] vertexPosition = new Vector3f[quadVertexCountPadded];
@@ -109,7 +121,7 @@ public class Patch {
         FloatBuffer colorBuffer = BufferUtils.createFloatBuffer((4 * totalVertexCount));
         FloatBuffer normalBuffer = BufferUtils.createFloatBuffer(3 * totalVertexCount);
         FloatBuffer textureBuffer = BufferUtils.createFloatBuffer(4 * quadVertexCount);
-        IntBuffer indexBuffer = BufferUtils.createIntBuffer(3 * totalTriangles);
+        
         // Fill final buffers
         for (int y = 0; y < (this.quads + 1); y++)
         {
@@ -141,7 +153,7 @@ public class Patch {
         
         // Get the patch's edge vertex indexes going clockwise
         int indexEdgeVertexIndex = 0;
-        int[] edgeVertexIndex = new int[skirtVertexCount];
+        this.edgeVertexIndex = new int[skirtVertexCount];
         for (int i = 0; i < verticesPerSide; i++)
             edgeVertexIndex[indexEdgeVertexIndex++] = i;
         for (int i = verticesPerSide + this.quads; i < quadVertexCount + 1; i+=verticesPerSide)
@@ -153,12 +165,12 @@ public class Patch {
         
         // Add skirt to end of vertex buffer
         for (int i = 0; i < skirtVertexCount; i++) {
-            // Make skirt 1/4th the height scale
+            // Make skirt 1/10th the height scale
             Vector3f v = new Vector3f(
                     vertexBuffer.get(3 * edgeVertexIndex[i]), 
                     vertexBuffer.get(3 * edgeVertexIndex[i] + 1),
                     vertexBuffer.get(3 * edgeVertexIndex[i] + 2));
-            v.subtractLocal(this.center.normalize().mult(this.dataSource.getHeightScale() / 4));
+            v.subtractLocal(this.center.normalize().mult((this.dataSource.getHeightScale() / 10) + 0.01f));
             vertexBuffer.put(v.x);
             vertexBuffer.put(v.y);
             vertexBuffer.put(v.z);
@@ -170,16 +182,11 @@ public class Patch {
             colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4));
             colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 1));
             colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 2));
-            colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 3));
-            
-            //textureBuffer.put(textureBuffer.get(edgeVertexIndex[i] * 4));
-            //textureBuffer.put(textureBuffer.get(edgeVertexIndex[i] * 4 + 1));
-            //textureBuffer.put(textureBuffer.get(edgeVertexIndex[i] * 4 + 2));
-            //textureBuffer.put(textureBuffer.get(edgeVertexIndex[i] * 4 + 3));
-            
+            colorBuffer.put(colorBuffer.get(edgeVertexIndex[i] * 4 + 3));   
         }
       
-        generateIndices(indexBuffer, edgeVertexIndex);
+        // Generate Indices
+        IntBuffer indexBuffer = generateIndices();
 
         // Set mesh buffers
         mesh = new Mesh();
@@ -207,6 +214,15 @@ public class Patch {
     
     public BoundingBox getAABB() {
         return this.aabb;
+    }
+    
+    public void setSkirting(boolean skirting) {
+        if (this.skirting != skirting) {
+            this.skirting = skirting;
+            IntBuffer indexBuffer = generateIndices();
+            mesh.clearBuffer(Type.Index);
+            mesh.setBuffer(Type.Index, 3, indexBuffer);
+        }
     }
     
     protected void generateVertexPositions(Vector3f[] vertexPosition, float[] vertexColor) {
@@ -413,7 +429,13 @@ public class Patch {
         
     }
     
-    protected void generateIndices(IntBuffer indexBuffer, int[] edgeVertexIndex) {
+    protected IntBuffer generateIndices() {
+        IntBuffer indexBuffer;
+        if (skirting)
+            indexBuffer = BufferUtils.createIntBuffer(3 * totalTriangles);
+       else
+            indexBuffer = BufferUtils.createIntBuffer(3 * quadTriangles);
+        
         for (int y = 0; y < quads; y++) {
             for (int x = 0; x < quads; x++) {
                 indexBuffer.put(y * (quads + 1) + x);
@@ -425,27 +447,32 @@ public class Patch {
             }
         }  
 
-        int skirtOffset = (this.quads + 1) * (this.quads + 1);
-        for (int y = 0; y < 1; y++) {
-            for (int x = 0; x < edgeVertexIndex.length; x++) {
-                if (x != edgeVertexIndex.length - 1) {
-                    indexBuffer.put(edgeVertexIndex[x]);
-                    indexBuffer.put(edgeVertexIndex[x + 1]);
-                    indexBuffer.put(x + skirtOffset);                
-                    indexBuffer.put(x + skirtOffset);
-                    indexBuffer.put(edgeVertexIndex[x + 1]);       
-                    indexBuffer.put(x + 1 + skirtOffset);
-                } else {
-                    indexBuffer.put(edgeVertexIndex[x]);
-                    indexBuffer.put(edgeVertexIndex[0]);
-                    indexBuffer.put(x + skirtOffset);                
-                    indexBuffer.put(x + skirtOffset);
-                    indexBuffer.put(edgeVertexIndex[0]);       
-                    indexBuffer.put(skirtOffset);
+        if (skirting) {
+            int skirtOffset = (this.quads + 1) * (this.quads + 1);
+            for (int y = 0; y < 1; y++) {
+                for (int x = 0; x < edgeVertexIndex.length; x++) {
+                    if (x != edgeVertexIndex.length - 1) {
+                        indexBuffer.put(edgeVertexIndex[x]);
+                        indexBuffer.put(edgeVertexIndex[x + 1]);
+                        indexBuffer.put(x + skirtOffset);                
+                        indexBuffer.put(x + skirtOffset);
+                        indexBuffer.put(edgeVertexIndex[x + 1]);       
+                        indexBuffer.put(x + 1 + skirtOffset);
+                    } else {
+                        indexBuffer.put(edgeVertexIndex[x]);
+                        indexBuffer.put(edgeVertexIndex[0]);
+                        indexBuffer.put(x + skirtOffset);                
+                        indexBuffer.put(x + skirtOffset);
+                        indexBuffer.put(edgeVertexIndex[0]);       
+                        indexBuffer.put(skirtOffset);
+                    }
+
                 }
-                
-            }
+            }            
         }
+
+        return indexBuffer;
+        
     }
     
     protected ColorRGBA getHeightColor(float height, float heightScale) {

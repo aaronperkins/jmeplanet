@@ -62,7 +62,7 @@ public class App extends SimpleApplication {
         rootNode.addLight(sun);
         
         // Create height data source
-        FractalDataSource dataSource = new FractalDataSource(33354);
+        FractalDataSource dataSource = new FractalDataSource(13354);
         dataSource.setHeightScale(250f);
 
          // Terrain material
@@ -97,12 +97,12 @@ public class App extends SimpleApplication {
         //planetMaterial.setBoolean("UseVertexColor", true);
 
         // add planet
-        planet = new Planet("Planet", 10000f, planetMaterial, dataSource);
-        PlanetController planetController = new PlanetController(planet, this.getCamera());
-        planet.addControl(planetController);
+        planet = new Planet("Planet",  6353f , planetMaterial, dataSource);
         rootNode.attachChild(planet);
         planet.setLocalTranslation(0f, 0f, 0f);
-         
+        PlanetController planetController = new PlanetController(planet, this.getCamera());
+        planet.addControl(planetController);
+ 
     }
     
     @Override

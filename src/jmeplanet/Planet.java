@@ -183,17 +183,30 @@ public class Planet extends Node {
                 this.minDepth,
                 this.maxDepth,
                 null,
-                0);
-        
-        
+                0);     
     }
     
     public void setCameraPosition(Vector3f position) {
         
+        int currentMaxDepth = this.minDepth;
+        
+        for (int i = 0; i < 6; i++) {
+            if (surfaceSide[i] != null) {
+                surfaceSide[i].setCameraPosition(position);
+                currentMaxDepth = Math.max(currentMaxDepth, surfaceSide[i].getCurrentMaxDepth());                
+            }
+        }
+        
+        boolean skirting;
+        if (currentMaxDepth == this.minDepth )
+            skirting = false;
+        else
+            skirting = true;
         for (int i = 0; i < 6; i++) {
             if (surfaceSide[i] != null)
-                surfaceSide[i].setCameraPosition(position);
+                surfaceSide[i].setSkirting(skirting);
         }
+
         
     }
     

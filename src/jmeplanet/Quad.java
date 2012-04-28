@@ -40,7 +40,7 @@ import com.jme3.terrain.heightmap.AbstractHeightMap;
 public class Quad {
     
     protected String name;
-    Material material;
+    protected Material material;
     protected Vector3f min;
     protected Vector3f max;
     protected float texXMin;
@@ -64,6 +64,13 @@ public class Quad {
     protected BoundingBox aabb;
     protected AbstractHeightMap heightMap;
     protected Quad[] subQuad = new Quad[4];
+    protected Quad[] neighborQuad = new Quad[4];
+    enum Neighbor {
+        Top,
+        Right,
+        Bottom,
+        Left
+    }
     
     public Quad(
             String name,
@@ -104,26 +111,12 @@ public class Quad {
         this.position = position;
         this.parentNode = parentNode;
         
-        this.patch = new Patch(
-                this.quads,
-                this.min,
-                this.max,
-                this.texXMin,
-                this.texXMax,
-                this.texYMin,
-                this.texYMax,
-                this.baseRadius,
-                this.scalingFactor,
-                this.dataSource,
-                this.position);
-        
-        this.patch.prepare();
-        this.quadCenter = this.patch.getCenter();
-        this.aabb = this.patch.getAABB();
+        this.aabb = new BoundingBox();
+        this.quadCenter = new Vector3f();
     }
     
     public void setCameraPosition(Vector3f position) {
-
+        // Update camera position for subquads
         for (int i = 0; i < 4; i++) {
             if (this.subQuad[i] != null) {
                 this.subQuad[i].setCameraPosition(position);
@@ -158,6 +151,8 @@ public class Quad {
                     (this.subQuad[2] == null || this.subQuad[2].isLeaf() ) &&
                     (this.subQuad[3] == null || this.subQuad[3].isLeaf() ))
             {
+                if (!isPrepared())
+                    prepare();
                 
                 if (this.quadGeometry == null) {
                     show();
@@ -171,12 +166,10 @@ public class Quad {
                 } 
             }
             
-        }
-        
+        }   
     }
 
-    public void show()
-    {
+    public void show() { 
         if (this.quadGeometry == null) {
             this.quadGeometry = new Geometry(this.name + "Geometry", patch.getMesh());
             
@@ -197,12 +190,13 @@ public class Quad {
         if (this.quadGeometry.getParent() == null) {
            this.quadNode.attachChild(this.quadGeometry);
            this.aabb = (BoundingBox)this.quadNode.getWorldBound();
-        }
-        
+        }     
     }
     
-    public void hide()
-    {
+    public void hide() {
+        if (this.patch != null)
+            this.patch = null;
+        
         if (this.quadGeometry != null) {
             this.quadGeometry.removeFromParent();
             this.quadGeometry = null;
@@ -211,10 +205,11 @@ public class Quad {
             this.quadNode.removeFromParent();
             this.quadNode = null;
         }
-
     }
     
     public boolean isPrepared() {
+        if (this.patch == null)
+            return false;
         return patch.isPrepared();
     }
     
@@ -223,8 +218,7 @@ public class Quad {
     }
     
     public void setWireframe(boolean value) {
-        if (this.quadGeometry != null)
-            this.material.getAdditionalRenderState().setWireframe(value);
+        this.material.getAdditionalRenderState().setWireframe(value);
         
         for (int i = 0; i < 4; i++) {
             if (this.subQuad[i] != null) {
@@ -232,9 +226,50 @@ public class Quad {
             }
         } 
     }
+
+    public void setSkirting(boolean skirting) {
+        if (this.patch != null)
+            this.patch.setSkirting(skirting);
+        
+        for (int i = 0; i < 4; i++) {
+            if (this.subQuad[i] != null)
+                this.subQuad[i].setSkirting(skirting);
+        } 
+    }
+      
+    public int getDepth() {
+        return this.depth;
+    }
+    
+    public int getCurrentMaxDepth() {
+         for (int i = 0; i < 4; i++) {
+            if (this.subQuad[i] != null)
+                return Math.max(this.depth, this.subQuad[i].getCurrentMaxDepth());
+        }
+        return this.depth;
+    }
+
+    protected void prepare() {                
+        this.patch = new Patch(
+                this.quads,
+                this.min,
+                this.max,
+                this.texXMin,
+                this.texXMax,
+                this.texYMin,
+                this.texYMax,
+                this.baseRadius,
+                this.scalingFactor,
+                this.dataSource,
+                this.position,
+                true);
+        
+        this.patch.prepare();
+        this.quadCenter = this.patch.getCenter();
+        this.aabb = this.patch.getAABB();
+    }
     
     protected void prepareSubQuads() {
-        
         Vector3f center = new Vector3f(
                 this.min.x + (this.max.x - this.min.x)/2,
                 this.min.y + (this.max.y - this.min.y)/2,
@@ -367,7 +402,7 @@ public class Quad {
                     this.maxDepth,
                     this,
                     3);
-        }
+        }            
     }
 
 }
