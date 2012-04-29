@@ -37,7 +37,6 @@ public class App extends SimpleApplication {
  
     @Override
     public void simpleInitApp() {
-        
         // Only show severe errors in log
         java.util.logging.Logger.getLogger("com.jme3").setLevel(java.util.logging.Level.SEVERE);
         
@@ -54,7 +53,7 @@ public class App extends SimpleApplication {
         
         // Setup camera
         this.getCamera().setFrustumFar(200000f);
-        this.getCamera().setLocation(new Vector3f(0f, 0f, 20000f));
+        this.getCamera().setLocation(new Vector3f(0f, 0f, 40000f));
         
         // Add sun
         DirectionalLight sun = new DirectionalLight();
@@ -62,7 +61,7 @@ public class App extends SimpleApplication {
         rootNode.addLight(sun);
         
         // Create height data source
-        FractalDataSource dataSource = new FractalDataSource(13354);
+        FractalDataSource dataSource = new FractalDataSource(4);
         dataSource.setHeightScale(250f);
 
          // Terrain material
@@ -97,12 +96,11 @@ public class App extends SimpleApplication {
         //planetMaterial.setBoolean("UseVertexColor", true);
 
         // add planet
-        planet = new Planet("Planet",  6353f , planetMaterial, dataSource);
+        planet = new Planet("Planet",  15000f , planetMaterial, dataSource);
         rootNode.attachChild(planet);
         planet.setLocalTranslation(0f, 0f, 0f);
         PlanetController planetController = new PlanetController(planet, this.getCamera());
         planet.addControl(planetController);
- 
     }
     
     @Override

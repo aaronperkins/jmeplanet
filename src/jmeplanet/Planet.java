@@ -38,21 +38,102 @@ public class Planet extends Node {
     
     protected Material material;
     protected float baseRadius = 50.0f;
+    protected HeightDataSource dataSource;
     protected float scalingFactor = 1f;
+    // Number of planer quads per patch. This value directly controls the 
+    // complexity of the geometry generated.
     protected int quads = 32;
+    // Minimal depth for spliting. The planet will start at this depth
+    // no matter the distance from camera
     protected int minDepth = 1;
+    // Max depth for splitting. The planet will only split down to this depth
+    // no matter the distance from the camera
     protected int maxDepth = 10;
     protected Quad[] surfaceSide = new Quad[6];
-    protected HeightDataSource dataSource;
-    
     protected boolean wireframeMode;
     
+    /**
+    * <code>Planet</code>
+    * @param name Name of the node
+    * @param baseRadius The radius of the planet
+    * @param material The material applied to the planet
+    * @param dataSource The <code>HeightDataSource</code> used for the terrain
+    * @param quads Number of planer quads per patch.
+    * @param minDepth Minimal depth for spliting.
+    * @param maxDepth Max depth for splitting.
+    * @return true if inside or intersecting camera frustum
+    */
+    public Planet(String name, float baseRadius, Material material, HeightDataSource dataSource, int quads, int minDepth, int maxDepth) {
+        super(name);
+        this.material = material;
+        this.baseRadius = baseRadius;
+        this.dataSource = dataSource;
+        this.quads = quads;
+        this.minDepth = minDepth;
+        this.maxDepth = maxDepth;
+        
+         prepare();
+    }
+    
+    /**
+    * <code>Planet</code>
+    * @param name Name of the node
+    * @param baseRadius The radius of the planet
+    * @param material The material applied to the planet
+    * @param dataSource The <code>HeightDataSource</code> used for the terrain
+    */
     public Planet(String name, float baseRadius, Material material, HeightDataSource dataSource) {
         super(name);
         this.material = material;
         this.baseRadius = baseRadius;
         this.dataSource = dataSource;
         
+        prepare();
+    }
+    
+    public void setCameraPosition(Vector3f position) {
+        int currentMaxDepth = 0;
+        
+        for (int i = 0; i < 6; i++) {
+            if (surfaceSide[i] != null) {
+                surfaceSide[i].setCameraPosition(position);
+                currentMaxDepth = Math.max(currentMaxDepth, surfaceSide[i].getCurrentMaxDepth());                
+            }
+        }
+        
+        // Turn on skirting if entire sphere is not at minDepth
+        boolean skirting;
+        if (currentMaxDepth == this.minDepth )
+            skirting = false;
+        else
+            skirting = true;
+        for (int i = 0; i < 6; i++) {
+            if (surfaceSide[i] != null)
+                surfaceSide[i].setSkirting(skirting);
+        }  
+    }
+    
+    public float getRadius() {
+        return this.baseRadius;
+    }
+    
+    public float getHeightScale() {
+        return dataSource.getHeightScale();
+    }
+    
+    public void toogleWireframe() {
+        if (this.wireframeMode)
+            wireframeMode = false;
+        else
+            wireframeMode = true;
+        
+        for (int i = 0; i < 6; i++) {
+            if (surfaceSide[i] != null)
+                surfaceSide[i].setWireframe(wireframeMode);
+        }      
+    }
+    
+    private void prepare() {
         Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
         Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
         surfaceSide[0] = new Quad(
@@ -183,53 +264,7 @@ public class Planet extends Node {
                 this.minDepth,
                 this.maxDepth,
                 null,
-                0);     
-    }
-    
-    public void setCameraPosition(Vector3f position) {
-        
-        int currentMaxDepth = this.minDepth;
-        
-        for (int i = 0; i < 6; i++) {
-            if (surfaceSide[i] != null) {
-                surfaceSide[i].setCameraPosition(position);
-                currentMaxDepth = Math.max(currentMaxDepth, surfaceSide[i].getCurrentMaxDepth());                
-            }
-        }
-        
-        boolean skirting;
-        if (currentMaxDepth == this.minDepth )
-            skirting = false;
-        else
-            skirting = true;
-        for (int i = 0; i < 6; i++) {
-            if (surfaceSide[i] != null)
-                surfaceSide[i].setSkirting(skirting);
-        }
-
-        
-    }
-    
-    public float getRadius() {
-        return this.baseRadius;
-    }
-    
-    public float getHeightScale() {
-        return dataSource.getHeightScale();
-    }
-    
-    public void toogleWireframe() {
-        
-        if (this.wireframeMode)
-            wireframeMode = false;
-        else
-            wireframeMode = true;
-        
-        for (int i = 0; i < 6; i++) {
-            if (surfaceSide[i] != null)
-                surfaceSide[i].setWireframe(wireframeMode);
-        }
-        
+                0);  
     }
      
 }

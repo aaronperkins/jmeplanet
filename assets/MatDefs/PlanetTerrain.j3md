@@ -1,4 +1,4 @@
-MaterialDef Terrain {
+MaterialDef PlanetTerrain {
 
         // Parameters to material:
         // regionXColorMap: X = 1..4 the texture that should be appliad to state X
@@ -19,9 +19,16 @@ MaterialDef Terrain {
                 Vector4 baseColor
                 Vector3 patchCenter
                 Float planetRadius
+
+                // Ambient color
+                Color Ambient (MaterialAmbient)
+
+                // Use the provided ambient, diffuse, and specular colors
+                Boolean UseMaterialColors
 	}
 
 	Technique {
+                LightMode MultiPass
 		VertexShader GLSL100:   MatDefs/PlanetTerrain.vert
 		FragmentShader GLSL100: MatDefs/PlanetTerrain.frag
 
@@ -29,7 +36,13 @@ MaterialDef Terrain {
 			WorldViewProjectionMatrix
 			WorldMatrix
 			NormalMatrix
+                        WorldViewMatrix
+                        ViewMatrix
 		}
+
+                Defines {
+                        MATERIAL_COLORS : UseMaterialColors
+                }
 	}
 
 	Technique FixedFunc {

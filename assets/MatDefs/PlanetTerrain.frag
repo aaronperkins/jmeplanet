@@ -13,9 +13,18 @@ uniform vec4 m_baseColor;
 uniform vec3 m_patchCenter;
 uniform float m_planetRadius;
 
-varying vec3 normal;
+varying vec3 vNormal;
 varying vec4 position;
-varying vec2 texCoord1;
+varying vec2 texCoord;
+
+varying vec3 AmbientSum;
+varying vec4 DiffuseSum;
+
+uniform vec4 g_LightDirection;
+//varying vec3 vPosition;
+varying vec3 vViewDir;
+varying vec4 vLightDir;
+varying vec3 lightVec;
 
 float getWeight(float value, float vMin, float vMax) {
 
@@ -29,27 +38,27 @@ float getWeight(float value, float vMin, float vMax) {
 
 vec4 GenerateTerrainColor() {
     
-    vec4 region1Color = 0.25 * texture2D(m_region1ColorMap, texCoord1)
-            + 0.25 * texture2D(m_region1ColorMap, (1.0 / 8.0) * texCoord1)
-            + 0.25 * texture2D(m_region1ColorMap, (1.0 / (8.0*8.0)) * texCoord1)
-            + 0.25 * texture2D(m_region1ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord1);
-    vec4 region2Color = 0.25 * texture2D(m_region2ColorMap, texCoord1)
-            + 0.25 * texture2D(m_region2ColorMap, (1.0 / 8.0) * texCoord1)
-            + 0.25 * texture2D(m_region2ColorMap, (1.0 / (8.0*8.0)) * texCoord1)
-            + 0.25 * texture2D(m_region2ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord1);
-    vec4 region3Color = 0.25 * texture2D(m_region3ColorMap, texCoord1)
-            + 0.25 * texture2D(m_region3ColorMap, (1.0 / 8.0) * texCoord1)
-            + 0.25 * texture2D(m_region3ColorMap, (1.0 / (8.0*8.0)) * texCoord1)
-            + 0.25 * texture2D(m_region3ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord1);
-    vec4 region4Color = 0.25 * texture2D(m_region4ColorMap, texCoord1)
-            + 0.25 * texture2D(m_region4ColorMap, (1.0 / 8.0) * texCoord1)
-            + 0.25 * texture2D(m_region4ColorMap, (1.0 / (8.0*8.0)) * texCoord1)
-            + 0.25 * texture2D(m_region4ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord1);
+    vec4 region1Color = 0.25 * texture2D(m_region1ColorMap, texCoord)
+            + 0.25 * texture2D(m_region1ColorMap, (1.0 / 8.0) * texCoord)
+            + 0.25 * texture2D(m_region1ColorMap, (1.0 / (8.0*8.0)) * texCoord)
+            + 0.25 * texture2D(m_region1ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
+    vec4 region2Color = 0.25 * texture2D(m_region2ColorMap, texCoord)
+            + 0.25 * texture2D(m_region2ColorMap, (1.0 / 8.0) * texCoord)
+            + 0.25 * texture2D(m_region2ColorMap, (1.0 / (8.0*8.0)) * texCoord)
+            + 0.25 * texture2D(m_region2ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
+    vec4 region3Color = 0.25 * texture2D(m_region3ColorMap, texCoord)
+            + 0.25 * texture2D(m_region3ColorMap, (1.0 / 8.0) * texCoord)
+            + 0.25 * texture2D(m_region3ColorMap, (1.0 / (8.0*8.0)) * texCoord)
+            + 0.25 * texture2D(m_region3ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
+    vec4 region4Color = 0.25 * texture2D(m_region4ColorMap, texCoord)
+            + 0.25 * texture2D(m_region4ColorMap, (1.0 / 8.0) * texCoord)
+            + 0.25 * texture2D(m_region4ColorMap, (1.0 / (8.0*8.0)) * texCoord)
+            + 0.25 * texture2D(m_region4ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
 
     vec4 color;
     color = vec4(0,0,0,1);
 
-    float height = length(m_patchCenter + position) - m_planetRadius;
+    float height = length(vec4(m_patchCenter, 1.0) + position) - m_planetRadius;
     //float slope = degrees(acos(dot(normalize(m_patchCenter + position), n_normal)));
 
     if (height <= m_region1.y)
@@ -86,7 +95,35 @@ vec4 GenerateTerrainColor() {
     return (color);
 }
 
+float lightComputeDiffuse(in vec3 norm, in vec3 lightdir, in vec3 viewdir){
+    #ifdef MINNAERT
+        float NdotL = max(0.0, dot(norm, lightdir));
+        float NdotV = max(0.0, dot(norm, viewdir));
+        return NdotL * pow(max(NdotL * NdotV, 0.1), -1.0) * 0.5;
+    #else
+        return max(0.0, dot(norm, lightdir));
+    #endif
+}
+
+vec2 computeLighting(in vec3 wvNorm, in vec3 wvViewDir, in vec3 wvLightDir){
+   float diffuseFactor = lightComputeDiffuse(wvNorm, wvLightDir, wvViewDir);
+   #ifdef HQ_ATTENUATION
+    float att = clamp(1.0 - g_LightPosition.w * length(lightVec), 0.0, 1.0);
+   #else
+    float att = vLightDir.w;
+   #endif
+
+   return vec2(diffuseFactor) * vec2(att);
+}
+
 void main() {
     vec4 color = GenerateTerrainColor();
-    gl_FragColor = color;
+
+    vec4 lightDir = vLightDir;
+   lightDir.xyz = normalize(lightDir.xyz);
+   vec3 viewDir = normalize(vViewDir);
+
+   vec2 light = computeLighting(vNormal, viewDir, lightDir.xyz);
+
+    gl_FragColor.rgb =  AmbientSum * color.rgb + DiffuseSum.rgb * color.rgb * vec3(light.x);
 }

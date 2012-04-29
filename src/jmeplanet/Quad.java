@@ -242,11 +242,13 @@ public class Quad {
     }
     
     public int getCurrentMaxDepth() {
-         for (int i = 0; i < 4; i++) {
-            if (this.subQuad[i] != null)
-                return Math.max(this.depth, this.subQuad[i].getCurrentMaxDepth());
+        int cDepth = this.depth;
+        for (int i = 0; i < 4; i++) {
+            if (this.subQuad[i] != null) {
+                cDepth = Math.max(cDepth, this.subQuad[i].getCurrentMaxDepth());
+            }
         }
-        return this.depth;
+        return cDepth;
     }
 
     protected void prepare() {                
