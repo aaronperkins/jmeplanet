@@ -104,7 +104,7 @@ vec2 computeLighting(in vec3 wvPos, in vec3 wvNorm, in vec3 wvViewDir, in vec4 w
 
 void main(){
    vec4 pos = vec4(inPosition, 1.0);
-    position = vec4(inPosition,0.0);
+   position = vec4(inPosition,0.0);
    gl_Position = g_WorldViewProjectionMatrix * pos;
    texCoord = inTexCoord;
    #ifdef SEPARATE_TEXCOORD

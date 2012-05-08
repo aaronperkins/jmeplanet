@@ -74,6 +74,7 @@ public class FractalDataSource implements HeightDataSource {
     
     private float heightScale = 1f;
     private float shift = 1f;
+    private boolean minEnabled = false;
     private float min = 0f;
     private float max = 1.5f;
 
@@ -106,8 +107,17 @@ public class FractalDataSource implements HeightDataSource {
 
     }
 
+    public void setMin(float min) {
+        this.min = min;
+        this.minEnabled = true;
+    }
+    
     public void setHeightScale(float heightScale) {
         this.heightScale = heightScale;
+    }
+    
+    public int getSeed() {
+        return this.seed;
     }
     
     public float getHeightScale() {
@@ -129,9 +139,16 @@ public class FractalDataSource implements HeightDataSource {
         }
         
         // return value, shifting, clamping, and scaling
-        return FastMath.clamp((value + shift) / (shift * 2), min, max) * heightScale;
+        //return FastMath.clamp((value + shift) / (shift * 2), min, max) * heightScale;
+
+        value *= heightScale;
+        
+        if (this.minEnabled)
+            value = Math.max(value, this.min);
+        
+        return value;
     }
-    
+
     private float calculateGradient (float x, float y, float z, int seed)
     {
             //if (this.quality == NOISE_QUALITY_STD)

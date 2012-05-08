@@ -27,6 +27,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Geometry;
 import com.jme3.material.Material;
 import com.jme3.bounding.BoundingBox;
+import com.jme3.shader.VarType;
 import com.jme3.terrain.heightmap.AbstractHeightMap;
 
 /**
@@ -152,7 +153,7 @@ public class Quad {
                     (this.subQuad[3] == null || this.subQuad[3].isLeaf() ))
             {
                 if (!isPrepared())
-                    prepare();
+                    preparePatch();
                 
                 if (this.quadGeometry == null) {
                     show();
@@ -173,6 +174,7 @@ public class Quad {
         if (this.quadGeometry == null) {
             this.quadGeometry = new Geometry(this.name + "Geometry", patch.getMesh());
             
+            // Set custom material parameters, if present
             if (this.material.getMaterialDef().getMaterialParam("patchCenter") != null)
                 this.material.setVector3("patchCenter", this.quadCenter);
             if (this.material.getMaterialDef().getMaterialParam("planetRadius") != null)
@@ -226,6 +228,20 @@ public class Quad {
             }
         } 
     }
+    
+    public void setMaterialParam(String name, VarType type, String value) {
+        switch (type){
+            case Boolean:
+                this.material.setBoolean(name, Boolean.parseBoolean(value));
+                break;
+        }
+        
+        for (int i = 0; i < 4; i++) {
+            if (this.subQuad[i] != null) {
+                this.subQuad[i].setMaterialParam(name, type, value);
+            }
+        } 
+    }
 
     public void setSkirting(boolean skirting) {
         if (this.patch != null)
@@ -251,7 +267,7 @@ public class Quad {
         return cDepth;
     }
 
-    protected void prepare() {                
+    protected void preparePatch() {                
         this.patch = new Patch(
                 this.quads,
                 this.min,
@@ -264,7 +280,7 @@ public class Quad {
                 this.scalingFactor,
                 this.dataSource,
                 this.position,
-                true);
+                false);
         
         this.patch.prepare();
         this.quadCenter = this.patch.getCenter();

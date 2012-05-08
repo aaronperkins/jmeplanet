@@ -23,8 +23,13 @@ package jmeplanet;
 
 import com.jme3.material.Material;
 import com.jme3.math.FastMath;
+import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
+import com.jme3.scene.Geometry;
+import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
+import com.jme3.scene.shape.Sphere;
+import com.jme3.shader.VarType;
 
 /**
  * Quad
@@ -36,7 +41,8 @@ import com.jme3.scene.Node;
  */
 public class Planet extends Node {
     
-    protected Material material;
+    protected Material surfaceMaterial;
+    protected Material oceanMaterial;
     protected float baseRadius = 50.0f;
     protected HeightDataSource dataSource;
     protected float scalingFactor = 1f;
@@ -51,6 +57,9 @@ public class Planet extends Node {
     protected int maxDepth = 10;
     protected Quad[] surfaceSide = new Quad[6];
     protected boolean wireframeMode;
+    protected boolean oceanFloorCulling;
+    protected Vector3f planetToCamera;
+    protected Node oceanNode;
     
     /**
     * <code>Planet</code>
@@ -65,14 +74,14 @@ public class Planet extends Node {
     */
     public Planet(String name, float baseRadius, Material material, HeightDataSource dataSource, int quads, int minDepth, int maxDepth) {
         super(name);
-        this.material = material;
+        this.surfaceMaterial = material;
         this.baseRadius = baseRadius;
         this.dataSource = dataSource;
         this.quads = quads;
         this.minDepth = minDepth;
         this.maxDepth = maxDepth;
         
-         prepare();
+         prepareSurface();
     }
     
     /**
@@ -84,33 +93,71 @@ public class Planet extends Node {
     */
     public Planet(String name, float baseRadius, Material material, HeightDataSource dataSource) {
         super(name);
-        this.material = material;
+        this.surfaceMaterial = material;
         this.baseRadius = baseRadius;
         this.dataSource = dataSource;
         
-        prepare();
+        prepareSurface();
+    }
+    
+    public void createOcean(Material material) {
+        this.oceanMaterial = material;
+        
+        if (oceanNode == null)
+            prepareOcean();
     }
     
     public void setCameraPosition(Vector3f position) {
-        int currentMaxDepth = 0;
         
+        // get vector between planet and camera
+        this.planetToCamera = position.subtract(this.getLocalTranslation());
+        
+        // Update camera positions for all quads
+        int currentMaxDepth = 0;
         for (int i = 0; i < 6; i++) {
             if (surfaceSide[i] != null) {
                 surfaceSide[i].setCameraPosition(position);
+                // get current max depth of quad for skirt toggling
                 currentMaxDepth = Math.max(currentMaxDepth, surfaceSide[i].getCurrentMaxDepth());                
             }
         }
         
-        // Turn on skirting if entire sphere is not at minDepth
         boolean skirting;
-        if (currentMaxDepth == this.minDepth )
+        // Are we at minDepth?
+        if (currentMaxDepth == this.minDepth ) {
+            // Turn off skirting if entire sphere is at minDepth
             skirting = false;
-        else
+            // swap ocean to sky bucket to avoid z-fighting
+            if (oceanNode != null)
+                oceanNode.setQueueBucket(queueBucket.Sky);
+        } else {
+            //otherwise turn on skirting
             skirting = true;
+            // swap ocean to regular bucket
+            if (oceanNode != null)
+                oceanNode.setQueueBucket(queueBucket.Opaque);
+        }
+        // Go through and set skirting on all quads
         for (int i = 0; i < 6; i++) {
             if (surfaceSide[i] != null)
                 surfaceSide[i].setSkirting(skirting);
-        }  
+        }
+        
+        // If we get close to the ocean floor, turn it on so we can see it.
+        // It's normally turned off to avoid z-fighting issues
+        if (oceanNode != null) {
+            float distance = this.planetToCamera.length() - this.baseRadius;
+            if (this.oceanFloorCulling)
+                if (distance <= 10) {
+                    this.oceanFloorCulling = false;
+                    setOceanFloorCulling(this.oceanFloorCulling);
+                }
+            if (!this.oceanFloorCulling)
+                if (distance > 10) {
+                    this.oceanFloorCulling = true;
+                    setOceanFloorCulling(this.oceanFloorCulling);
+                }             
+        }
     }
     
     public float getRadius() {
@@ -121,11 +168,18 @@ public class Planet extends Node {
         return dataSource.getHeightScale();
     }
     
+    public Vector3f getPlanetToCamera() {
+        return this.planetToCamera;
+    }
+    
     public void toogleWireframe() {
         if (this.wireframeMode)
             wireframeMode = false;
         else
             wireframeMode = true;
+        
+        if (oceanNode != null)
+            this.oceanMaterial.getAdditionalRenderState().setWireframe(wireframeMode);
         
         for (int i = 0; i < 6; i++) {
             if (surfaceSide[i] != null)
@@ -133,12 +187,13 @@ public class Planet extends Node {
         }      
     }
     
-    private void prepare() {
+    private void prepareSurface() {
+        
         Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
         Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
         surfaceSide[0] = new Quad(
                 "SurfaceRight",
-                this.material,
+                this.surfaceMaterial,
                 this,
                 rightMin,
                 rightMax,
@@ -160,7 +215,7 @@ public class Planet extends Node {
         Vector3f leftMax = new Vector3f(-1.0f, -1.0f, 1.0f);
         surfaceSide[1] = new Quad(
                 "SurfaceLeft",
-                this.material,
+                this.surfaceMaterial,
                 this,
                 leftMin,
                 leftMax,
@@ -182,7 +237,7 @@ public class Planet extends Node {
         Vector3f topMax = new Vector3f(1.0f, 1.0f, 1.0f);
         surfaceSide[2] = new Quad(
                 "SurfaceTop",
-                this.material,
+                this.surfaceMaterial,
                 this,
                 topMin,
                 topMax,
@@ -204,7 +259,7 @@ public class Planet extends Node {
         Vector3f bottomMax = new Vector3f(1.0f, -1.0f, -1.0f);
         surfaceSide[3] = new Quad(
                 "SurfaceBottom",
-                this.material,
+                this.surfaceMaterial,
                 this,
                 bottomMin,
                 bottomMax,
@@ -226,7 +281,7 @@ public class Planet extends Node {
         Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
         surfaceSide[5] = new Quad(
                 "SurfaceBack",
-                this.material,
+                this.surfaceMaterial,
                 this,
                 backMin,
                 backMax,
@@ -248,7 +303,7 @@ public class Planet extends Node {
         Vector3f frontMax = new Vector3f(1.0f, -1.0f, 1.0f);
         surfaceSide[4] = new Quad(
                 "SurfaceFront",
-                this.material,
+                this.surfaceMaterial,
                 this,
                 frontMin,
                 frontMax,
@@ -266,5 +321,28 @@ public class Planet extends Node {
                 null,
                 0);  
     }
+    
+    private void setOceanFloorCulling(boolean cull) {        
+        if (this.surfaceMaterial.getMaterialDef().getMaterialParam("CullOceanFloor") != null) {
+            for (int i = 0; i < 6; i++) {
+                if (surfaceSide[i] != null)
+                    surfaceSide[i].setMaterialParam("CullOceanFloor", VarType.Boolean, new Boolean(cull).toString());
+            }
+        }
+    }
+    
+    private void prepareOcean() {        
+        oceanNode = new Node("OceanNode");
+        this.attachChild(oceanNode);
+             
+        Mesh sphere = new Sphere(100, 100, this.baseRadius + (this.baseRadius * 0.00025f), false, false);
+        Geometry ocean = new Geometry("Ocean", sphere);
+        
+        ocean.setMaterial(this.oceanMaterial);
+        ocean.rotate( FastMath.HALF_PI, 0, 0);
+        
+        oceanNode.attachChild(ocean);
+    }
+    
      
 }

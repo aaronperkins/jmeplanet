@@ -12,19 +12,17 @@ import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
-import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
-
+import com.jme3.scene.Node;
 
 import jmeplanet.Planet;
-import jmeplanet.PlanetController;
 import jmeplanet.FractalDataSource;
+import jmeplanet.PlanetAppState;
  
 public class App extends SimpleApplication {
     
-    Planet planet;
-    Material planetMaterial;
-
+    private PlanetAppState planetAppState;
+    
     public static void main(String[] args){
         AppSettings settings = new AppSettings(true);
         settings.setResolution(1024,768);
@@ -40,19 +38,23 @@ public class App extends SimpleApplication {
         // Only show severe errors in log
         java.util.logging.Logger.getLogger("com.jme3").setLevel(java.util.logging.Level.SEVERE);
         
-        // Togle mouse cursor
+        // Toggle mouse cursor
         inputManager.addMapping("TOGGLE_CURSOR", 
                 new MouseButtonTrigger(MouseInput.BUTTON_LEFT),
                 new KeyTrigger(KeyInput.KEY_SPACE));
         inputManager.addListener(actionListener, "TOGGLE_CURSOR"); 
-        inputManager.setCursorVisible(true);
         // Toggle wireframe
         inputManager.addMapping("TOGGLE_WIREFRAME", 
-            new KeyTrigger(KeyInput.KEY_1));
-        inputManager.addListener(actionListener, "TOGGLE_WIREFRAME"); 
+            new KeyTrigger(KeyInput.KEY_T));
+        inputManager.addListener(actionListener, "TOGGLE_WIREFRAME");
+        // Collision test
+        inputManager.addMapping("COLLISION_TEST", 
+            new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
+        inputManager.addListener(actionListener, "COLLISION_TEST"); 
         
         // Setup camera
         this.getCamera().setFrustumFar(200000f);
+        this.getCamera().setFrustumNear(1f);
         this.getCamera().setLocation(new Vector3f(0f, 0f, 40000f));
         
         // Add sun
@@ -60,63 +62,38 @@ public class App extends SimpleApplication {
         sun.setDirection(new Vector3f(-0.1f, -0.7f, -1.0f));
         rootNode.addLight(sun);
         
-        // Create height data source
-        FractalDataSource dataSource = new FractalDataSource(4);
-        dataSource.setHeightScale(250f);
-
-         // Terrain material
-        planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
+        // Add sky
+        Node sceneNode = new Node("Scene");
+        sceneNode.attachChild(Utility.createSkyBox(this.getAssetManager(), "Textures/blue-glow-1024.dds"));
+        rootNode.attachChild(sceneNode);
         
-        // base color ( underwater )
-        planetMaterial.setColor("baseColor", new ColorRGBA(0.1f,0.3f,0.8f,1.0f));
-         // shore texture
-        Texture dirt = this.assetManager.loadTexture("Textures/dirt.jpg");
-        dirt.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region1ColorMap", dirt);
-        planetMaterial.setVector3("region1", new Vector3f(0, 50, 0));
-        // grass texture
-        Texture grass = this.assetManager.loadTexture("Textures/grass.jpg");
-        grass.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region2ColorMap", grass);
-        planetMaterial.setVector3("region2", new Vector3f(40, 220, 0));
-        // rock texture
-        Texture rock = this.assetManager.loadTexture("Textures/rock.jpg");
-        rock.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region3ColorMap", rock);
-        planetMaterial.setVector3("region3", new Vector3f(210, 340, 0));
-        // snow
-        Texture snow = this.assetManager.loadTexture("Textures/snow.jpg");
-        snow.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region4ColorMap", snow);
-        planetMaterial.setVector3("region4", new Vector3f(235, 375, 0));
+        // Add planet app state
+        planetAppState = new PlanetAppState();
+        stateManager.attach(planetAppState);
         
-        //planetMaterial = new Material(this.assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        //planetMaterial.setBoolean("VertexColor", true);
-        //planetMaterial = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
-        //planetMaterial.setBoolean("UseVertexColor", true);
-
-        // add planet
-        planet = new Planet("Planet",  15000f , planetMaterial, dataSource);
+        // Add planet
+        Planet planet = createEarthLikePlanet(10000, 250, 4);
+        planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);
         planet.setLocalTranslation(0f, 0f, 0f);
-        PlanetController planetController = new PlanetController(planet, this.getCamera());
-        planet.addControl(planetController);
+        
+        // Add moon
+        Planet moon = createMoonLikePlanet(2000, 100, 6);
+        planetAppState.addPlanet(moon);
+        rootNode.attachChild(moon);
+        moon.setLocalTranslation(-20000f, 0f, 0f);
+
     }
     
     @Override
     public void simpleUpdate(float tpf) {
-        //planet.rotate(0, 0.005f*tpf, 0); 
-        
-        //simple collision detection
-        Vector3f cameraLocation = this.getCamera().getLocation();        
-        Vector3f planetToCamera = cameraLocation.subtract(planet.getLocalTranslation());
-        float cameraHeight = planetToCamera.length();
-        float r = planet.getRadius();
-        float hs = planet.getHeightScale();
-        float minHeight = (r + hs / 2 + 1f);
-        this.getFlyByCamera().setMoveSpeed(FastMath.clamp(cameraHeight - minHeight, 25, 2000));
-        if (cameraHeight < minHeight) {
-            //this.getCamera().setLocation(planet.getLocalTranslation().add(planetToCamera.normalize().mult(minHeight)));
+
+        // slow camera down as we approach a planet
+        Planet planet = planetAppState.getClosestPlanet();
+        if (planet != null && planet.getPlanetToCamera() != null) {
+            float cameraHeight = planet.getPlanetToCamera().length();
+            this.getFlyByCamera().setMoveSpeed(
+                    FastMath.clamp(cameraHeight - planet.getRadius(), 5, 10000));
         }
         
     }
@@ -131,12 +108,95 @@ public class App extends SimpleApplication {
                     inputManager.setCursorVisible(true);
                 }
             }
-            
+
             if (name.equals("TOGGLE_WIREFRAME") && !pressed) {
+                for (Planet planet: planetAppState.getPlanets()) {
                     planet.toogleWireframe();
+                }
             }
-            
+             
         }
-    };
+    }; 
+    
+    private Planet createEarthLikePlanet(float radius, float heightScale, int seed) {
+         // planet material
+        Material planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
+        
+         // shore texture
+        Texture dirt = this.assetManager.loadTexture("Textures/dirt.jpg");
+        dirt.setWrap(WrapMode.Repeat);
+        planetMaterial.setTexture("region1ColorMap", dirt);
+        planetMaterial.setVector3("region1", new Vector3f(0, heightScale * 0.2f, 0));
+        // grass texture
+        Texture grass = this.assetManager.loadTexture("Textures/grass.jpg");
+        grass.setWrap(WrapMode.Repeat);
+        planetMaterial.setTexture("region2ColorMap", grass);
+        planetMaterial.setVector3("region2", new Vector3f(heightScale * 0.16f, heightScale * 0.88f, 0));
+        // rock texture
+        Texture rock = this.assetManager.loadTexture("Textures/rock.jpg");
+        rock.setWrap(WrapMode.Repeat);
+        planetMaterial.setTexture("region3ColorMap", rock);
+        planetMaterial.setVector3("region3", new Vector3f(heightScale * 0.84f, heightScale * 1.36f, 0));
+        // snow
+        Texture snow = this.assetManager.loadTexture("Textures/snow.jpg");
+        snow.setWrap(WrapMode.Repeat);
+        planetMaterial.setTexture("region4ColorMap", snow);
+        planetMaterial.setVector3("region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
+        
+        //planetMaterial = new Material(this.assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        //planetMaterial.setBoolean("VertexColor", true);
+        //planetMaterial = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
+        //planetMaterial.setBoolean("UseVertexColor", true);
+
+         // Create height data source
+        FractalDataSource dataSource = new FractalDataSource(seed);
+        dataSource.setHeightScale(heightScale);
+        
+        // create planet
+        Planet planet = new Planet("Planet", radius, planetMaterial, dataSource);
+        
+        // create ocean
+        Material oceanmat = assetManager.loadMaterial("Materials/Ocean.j3m");
+        planet.createOcean(oceanmat);
+        
+        return planet;
+    }
+    
+    private Planet createMoonLikePlanet(float radius, float heightScale, int seed) {
+         // planet material
+        Material planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
+        
+         // shore texture
+        Texture dirt = this.assetManager.loadTexture("Textures/moon.jpg");
+        dirt.setWrap(WrapMode.Repeat);
+        planetMaterial.setTexture("region1ColorMap", dirt);
+        planetMaterial.setVector3("region1", new Vector3f(0, heightScale * 0.2f, 0));
+        // grass texture
+        Texture grass = this.assetManager.loadTexture("Textures/moon.jpg");
+        grass.setWrap(WrapMode.Repeat);
+        planetMaterial.setTexture("region2ColorMap", grass);
+        planetMaterial.setVector3("region2", new Vector3f(heightScale * 0.16f, heightScale * 0.88f, 0));
+        // rock texture
+        Texture rock = this.assetManager.loadTexture("Textures/rock.jpg");
+        rock.setWrap(WrapMode.Repeat);
+        planetMaterial.setTexture("region3ColorMap", rock);
+        planetMaterial.setVector3("region3", new Vector3f(heightScale * 0.84f, heightScale * 1.36f, 0));
+        // snow
+        Texture snow = this.assetManager.loadTexture("Textures/rock.jpg");
+        snow.setWrap(WrapMode.Repeat);
+        planetMaterial.setTexture("region4ColorMap", snow);
+        planetMaterial.setVector3("region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
+
+         // Create height data source
+        FractalDataSource dataSource = new FractalDataSource(seed);
+        dataSource.setHeightScale(heightScale);
+        
+        // create planet
+        Planet planet = new Planet("Planet", radius, planetMaterial, dataSource);
+        
+        return planet;
+    }
+    
+
     
 }

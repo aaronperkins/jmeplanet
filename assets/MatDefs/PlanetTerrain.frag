@@ -8,8 +8,6 @@ uniform sampler2D m_region2ColorMap;
 uniform sampler2D m_region3ColorMap;
 uniform sampler2D m_region4ColorMap;
 
-uniform vec4 m_baseColor;
-
 uniform vec3 m_patchCenter;
 uniform float m_planetRadius;
 
@@ -27,7 +25,6 @@ varying vec4 vLightDir;
 varying vec3 lightVec;
 
 float getWeight(float value, float vMin, float vMax) {
-
     float weight;
     float range = vMax - vMin;
     weight = (range - abs(value - vMax)) / range;
@@ -36,7 +33,7 @@ float getWeight(float value, float vMin, float vMax) {
     return weight;
 }
 
-vec4 GenerateTerrainColor() {
+vec4 generateTerrainColor(float height) {
     
     vec4 region1Color = 0.25 * texture2D(m_region1ColorMap, texCoord)
             + 0.25 * texture2D(m_region1ColorMap, (1.0 / 8.0) * texCoord)
@@ -58,11 +55,7 @@ vec4 GenerateTerrainColor() {
     vec4 color;
     color = vec4(0,0,0,1);
 
-    float height = length(vec4(m_patchCenter, 1.0) + position) - m_planetRadius;
     //float slope = degrees(acos(dot(normalize(m_patchCenter + position), n_normal)));
-
-    if (height <= m_region1.y)
-        color = m_baseColor;
 
     float m_regionMin = 0.0;
     float m_regionMax = 0.0;
@@ -71,6 +64,9 @@ vec4 GenerateTerrainColor() {
     // Terrain m_region 1.
     m_regionMin = m_region1.x;
     m_regionMax = m_region1.y;
+    // Use region1's texture as the base
+    if (height <= m_regionMax)
+        color = region1Color;
     m_regionWeight = getWeight(height, m_regionMin, m_regionMax);
     color = mix(color, region1Color, m_regionWeight);
 
@@ -106,24 +102,40 @@ float lightComputeDiffuse(in vec3 norm, in vec3 lightdir, in vec3 viewdir){
 }
 
 vec2 computeLighting(in vec3 wvNorm, in vec3 wvViewDir, in vec3 wvLightDir){
-   float diffuseFactor = lightComputeDiffuse(wvNorm, wvLightDir, wvViewDir);
-   #ifdef HQ_ATTENUATION
-    float att = clamp(1.0 - g_LightPosition.w * length(lightVec), 0.0, 1.0);
-   #else
-    float att = vLightDir.w;
-   #endif
+    float diffuseFactor = lightComputeDiffuse(wvNorm, wvLightDir, wvViewDir);
+    #ifdef HQ_ATTENUATION
+        float att = clamp(1.0 - g_LightPosition.w * length(lightVec), 0.0, 1.0);
+    #else
+        float att = vLightDir.w;
+    #endif
 
-   return vec2(diffuseFactor) * vec2(att);
+    return vec2(diffuseFactor) * vec2(att);
 }
 
 void main() {
-    vec4 color = GenerateTerrainColor();
+    // Compute height of position from surface of planet
+    float height = length(vec4(m_patchCenter, 1.0) + position) - m_planetRadius;
+    
+    // Cull anything below 0 height
+    #ifdef CULL_OCEAN_FLOOR
+        if (height <= 0) {
+            gl_FragDepth = 1;
+            gl_FragColor.rgb = vec4(0,0,0,1);
+            return;
+        }
+        else
+        {
+            gl_FragDepth = gl_FragCoord.z;
+        }
+    #endif
+
+    vec4 color = generateTerrainColor(height);
 
     vec4 lightDir = vLightDir;
-   lightDir.xyz = normalize(lightDir.xyz);
-   vec3 viewDir = normalize(vViewDir);
+    lightDir.xyz = normalize(lightDir.xyz);
+    vec3 viewDir = normalize(vViewDir);
 
-   vec2 light = computeLighting(vNormal, viewDir, lightDir.xyz);
+    vec2 light = computeLighting(vNormal, viewDir, lightDir.xyz);
 
-    gl_FragColor.rgb =  AmbientSum * color.rgb + DiffuseSum.rgb * color.rgb * vec3(light.x);
+    gl_FragColor.rgb =  AmbientSum * color.rgb + DiffuseSum.rgb * color.rgb * vec3(light.x);   
 }

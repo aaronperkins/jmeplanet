@@ -16,15 +16,19 @@ MaterialDef PlanetTerrain {
 		Vector3 region2
 		Vector3 region3
 		Vector3 region4
-                Vector4 baseColor
+
+                // Used for height determination
                 Vector3 patchCenter
                 Float planetRadius
-
+                
                 // Ambient color
                 Color Ambient (MaterialAmbient)
 
                 // Use the provided ambient, diffuse, and specular colors
                 Boolean UseMaterialColors
+
+                // Don't draw ocean floor (stops z-fighting with ocean mesh)
+                Boolean CullOceanFloor
 	}
 
 	Technique {
@@ -42,6 +46,7 @@ MaterialDef PlanetTerrain {
 
                 Defines {
                         MATERIAL_COLORS : UseMaterialColors
+                        CULL_OCEAN_FLOOR : CullOceanFloor
                 }
 	}
 
