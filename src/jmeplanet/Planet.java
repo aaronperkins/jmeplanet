@@ -147,13 +147,14 @@ public class Planet extends Node {
         // It's normally turned off to avoid z-fighting issues
         if (oceanNode != null) {
             float distance = this.planetToCamera.length() - this.baseRadius;
+            float floorThreshold = this.baseRadius / 100.0f;
             if (this.oceanFloorCulling)
-                if (distance <= 10) {
+                if (distance <= floorThreshold) {
                     this.oceanFloorCulling = false;
                     setOceanFloorCulling(this.oceanFloorCulling);
                 }
             if (!this.oceanFloorCulling)
-                if (distance > 10) {
+                if (distance > floorThreshold) {
                     this.oceanFloorCulling = true;
                     setOceanFloorCulling(this.oceanFloorCulling);
                 }             
