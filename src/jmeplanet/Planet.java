@@ -23,7 +23,6 @@ package jmeplanet;
 
 import com.jme3.material.Material;
 import com.jme3.math.FastMath;
-import com.jme3.math.Vector2f;
 import com.jme3.math.Vector3f;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Mesh;
@@ -41,8 +40,11 @@ import com.jme3.shader.VarType;
  */
 public class Planet extends Node {
     
-    protected Material surfaceMaterial;
+    protected Material terrainMaterial;
     protected Material oceanMaterial;
+    protected Node planetNode;
+    protected Node terrainNode;
+    protected Node oceanNode;
     protected float baseRadius = 50.0f;
     protected HeightDataSource dataSource;
     protected float scalingFactor = 1f;
@@ -55,11 +57,10 @@ public class Planet extends Node {
     // Max depth for splitting. The planet will only split down to this depth
     // no matter the distance from the camera
     protected int maxDepth = 10;
-    protected Quad[] surfaceSide = new Quad[6];
+    protected Quad[] terrainSide = new Quad[6];
     protected boolean wireframeMode;
     protected boolean oceanFloorCulling;
     protected Vector3f planetToCamera;
-    protected Node oceanNode;
     
     /**
     * <code>Planet</code>
@@ -74,14 +75,17 @@ public class Planet extends Node {
     */
     public Planet(String name, float baseRadius, Material material, HeightDataSource dataSource, int quads, int minDepth, int maxDepth) {
         super(name);
-        this.surfaceMaterial = material;
+        this.terrainMaterial = material;
         this.baseRadius = baseRadius;
         this.dataSource = dataSource;
         this.quads = quads;
         this.minDepth = minDepth;
         this.maxDepth = maxDepth;
         
-         prepareSurface();
+        this.planetNode = new Node("PlanetNode");
+        this.attachChild(planetNode);
+        
+        prepareTerrain();
     }
     
     /**
@@ -93,11 +97,14 @@ public class Planet extends Node {
     */
     public Planet(String name, float baseRadius, Material material, HeightDataSource dataSource) {
         super(name);
-        this.surfaceMaterial = material;
+        this.terrainMaterial = material;
         this.baseRadius = baseRadius;
         this.dataSource = dataSource;
         
-        prepareSurface();
+        this.planetNode = new Node("PlanetNode");
+        this.attachChild(planetNode);
+        
+        prepareTerrain();
     }
     
     public void createOcean(Material material) {
@@ -115,10 +122,10 @@ public class Planet extends Node {
         // Update camera positions for all quads
         int currentMaxDepth = 0;
         for (int i = 0; i < 6; i++) {
-            if (surfaceSide[i] != null) {
-                surfaceSide[i].setCameraPosition(position);
+            if (terrainSide[i] != null) {
+                terrainSide[i].setCameraPosition(position);
                 // get current max depth of quad for skirt toggling
-                currentMaxDepth = Math.max(currentMaxDepth, surfaceSide[i].getCurrentMaxDepth());                
+                currentMaxDepth = Math.max(currentMaxDepth, terrainSide[i].getCurrentMaxDepth());                
             }
         }
         
@@ -139,8 +146,8 @@ public class Planet extends Node {
         }
         // Go through and set skirting on all quads
         for (int i = 0; i < 6; i++) {
-            if (surfaceSide[i] != null)
-                surfaceSide[i].setSkirting(skirting);
+            if (terrainSide[i] != null)
+                terrainSide[i].setSkirting(skirting);
         }
         
         // If we get close to the ocean floor, turn it on so we can see it.
@@ -159,6 +166,10 @@ public class Planet extends Node {
                     setOceanFloorCulling(this.oceanFloorCulling);
                 }             
         }
+    }
+    
+    public Node getPlanetNode() {
+        return this.planetNode;
     }
     
     public float getRadius() {
@@ -183,19 +194,22 @@ public class Planet extends Node {
             this.oceanMaterial.getAdditionalRenderState().setWireframe(wireframeMode);
         
         for (int i = 0; i < 6; i++) {
-            if (surfaceSide[i] != null)
-                surfaceSide[i].setWireframe(wireframeMode);
+            if (terrainSide[i] != null)
+                terrainSide[i].setWireframe(wireframeMode);
         }      
     }
     
-    private void prepareSurface() {
+    private void prepareTerrain() {
+
+        this.terrainNode = new Node("TerrainNode");
+        this.planetNode.attachChild(terrainNode);
         
         Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
         Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
-        surfaceSide[0] = new Quad(
-                "SurfaceRight",
-                this.surfaceMaterial,
-                this,
+        terrainSide[0] = new Quad(
+                "TerrainRight",
+                this.terrainMaterial,
+                this.terrainNode,
                 rightMin,
                 rightMax,
                 0f,
@@ -214,10 +228,10 @@ public class Planet extends Node {
    
         Vector3f leftMin = new Vector3f(-1.0f, 1.0f, -1.0f);
         Vector3f leftMax = new Vector3f(-1.0f, -1.0f, 1.0f);
-        surfaceSide[1] = new Quad(
-                "SurfaceLeft",
-                this.surfaceMaterial,
-                this,
+        terrainSide[1] = new Quad(
+                "TerrainLeft",
+                this.terrainMaterial,
+                this.terrainNode,
                 leftMin,
                 leftMax,
                 0f,
@@ -236,10 +250,10 @@ public class Planet extends Node {
 
         Vector3f topMin = new Vector3f(-1.0f, 1.0f, -1.0f);
         Vector3f topMax = new Vector3f(1.0f, 1.0f, 1.0f);
-        surfaceSide[2] = new Quad(
-                "SurfaceTop",
-                this.surfaceMaterial,
-                this,
+        terrainSide[2] = new Quad(
+                "TerrainTop",
+                this.terrainMaterial,
+                this.terrainNode,
                 topMin,
                 topMax,
                 0f,
@@ -258,10 +272,10 @@ public class Planet extends Node {
 
         Vector3f bottomMin = new Vector3f(-1.0f, -1.0f, 1.0f);
         Vector3f bottomMax = new Vector3f(1.0f, -1.0f, -1.0f);
-        surfaceSide[3] = new Quad(
-                "SurfaceBottom",
-                this.surfaceMaterial,
-                this,
+        terrainSide[3] = new Quad(
+                "TerrainBottom",
+                this.terrainMaterial,
+                this.terrainNode,
                 bottomMin,
                 bottomMax,
                 0f,
@@ -280,10 +294,10 @@ public class Planet extends Node {
       
         Vector3f backMin = new Vector3f(1.0f, 1.0f, -1.0f);
         Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
-        surfaceSide[5] = new Quad(
-                "SurfaceBack",
-                this.surfaceMaterial,
-                this,
+        terrainSide[5] = new Quad(
+                "TerrainBack",
+                this.terrainMaterial,
+                this.terrainNode,
                 backMin,
                 backMax,
                 0f,
@@ -302,10 +316,10 @@ public class Planet extends Node {
         
         Vector3f frontMin = new Vector3f(-1.0f, 1.0f, 1.0f);
         Vector3f frontMax = new Vector3f(1.0f, -1.0f, 1.0f);
-        surfaceSide[4] = new Quad(
-                "SurfaceFront",
-                this.surfaceMaterial,
-                this,
+        terrainSide[4] = new Quad(
+                "TerrainFront",
+                this.terrainMaterial,
+                this.terrainNode,
                 frontMin,
                 frontMax,
                 0f,
@@ -324,17 +338,17 @@ public class Planet extends Node {
     }
     
     private void setOceanFloorCulling(boolean cull) {        
-        if (this.surfaceMaterial.getMaterialDef().getMaterialParam("CullOceanFloor") != null) {
+        if (this.terrainMaterial.getMaterialDef().getMaterialParam("CullOceanFloor") != null) {
             for (int i = 0; i < 6; i++) {
-                if (surfaceSide[i] != null)
-                    surfaceSide[i].setMaterialParam("CullOceanFloor", VarType.Boolean, new Boolean(cull).toString());
+                if (terrainSide[i] != null)
+                    terrainSide[i].setMaterialParam("CullOceanFloor", VarType.Boolean, new Boolean(cull).toString());
             }
         }
     }
     
     private void prepareOcean() {        
-        oceanNode = new Node("OceanNode");
-        this.attachChild(oceanNode);
+        this.oceanNode = new Node("OceanNode");
+        planetNode.attachChild(oceanNode);
              
         Mesh sphere = new Sphere(100, 100, this.baseRadius + (this.baseRadius * 0.00025f), false, false);
         Geometry ocean = new Geometry("Ocean", sphere);
@@ -342,8 +356,7 @@ public class Planet extends Node {
         ocean.setMaterial(this.oceanMaterial);
         ocean.rotate( FastMath.HALF_PI, 0, 0);
         
-        oceanNode.attachChild(ocean);
-    }
-    
+        this.oceanNode.attachChild(ocean);
+    } 
      
 }

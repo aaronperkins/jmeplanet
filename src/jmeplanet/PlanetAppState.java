@@ -44,30 +44,24 @@ public class PlanetAppState extends AbstractAppState {
     public void initialize(AppStateManager stateManager, Application app) {
         super.initialize(stateManager, app);
         
-        this.app = app;
+        this.app = app;    
     }
             
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        
-
     }
     
     @Override
     public void update(float tpf) {
-        
         for (Planet planet: this.planets ) {
             planet.setCameraPosition(this.app.getCamera().getLocation());
         }
-
     }
     
     @Override
     public void cleanup() {
         super.cleanup();
-
-      
     }
     
     public void addPlanet(Planet planet) {
@@ -87,5 +81,5 @@ public class PlanetAppState extends AbstractAppState {
         }
         return cPlanet;
     }
-     
+  
 }

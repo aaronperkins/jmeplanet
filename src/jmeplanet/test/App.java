@@ -87,7 +87,6 @@ public class App extends SimpleApplication {
     
     @Override
     public void simpleUpdate(float tpf) {
-
         // slow camera down as we approach a planet
         Planet planet = planetAppState.getClosestPlanet();
         if (planet != null && planet.getPlanetToCamera() != null) {
