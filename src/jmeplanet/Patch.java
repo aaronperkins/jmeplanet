@@ -49,7 +49,6 @@ public class Patch {
     protected float texYMin;
     protected float texYMax;
     protected float baseRadius;
-    protected float scalingFactor;
     protected HeightDataSource dataSource;
     protected int position;
     protected boolean skirting;
@@ -77,7 +76,6 @@ public class Patch {
             float texYMin,
             float texYMax,
             float baseRadius,
-            float scalingFactor,
             HeightDataSource dataSource,
             int position,
             boolean skirting) {
@@ -90,7 +88,6 @@ public class Patch {
         this.texYMin = texYMin;
         this.texYMax = texYMax;
         this.baseRadius = baseRadius;
-        this.scalingFactor = scalingFactor;
         this.dataSource = dataSource;
         this.position = position;
         this.skirting = skirting;
@@ -347,7 +344,7 @@ public class Patch {
                 int index = (this.quads + 2*this.padding + 1) * y + x;
  
                 // vertex position with height added
-                vertexPosition[index] = unitSpherePos[index].mult(baseRadius + heightData[index] * scalingFactor);
+                vertexPosition[index] = unitSpherePos[index].mult(baseRadius + heightData[index]);
                 
                 // vertex color
                 ColorRGBA color = getHeightColor(heightData[index], this.dataSource.getHeightScale());

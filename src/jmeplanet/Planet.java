@@ -24,11 +24,7 @@ package jmeplanet;
 import com.jme3.material.Material;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
-import com.jme3.scene.shape.Sphere;
-import com.jme3.shader.VarType;
 
 /**
  * Quad
@@ -47,13 +43,12 @@ public class Planet extends Node {
     protected Node oceanNode;
     protected float baseRadius = 50.0f;
     protected HeightDataSource dataSource;
-    protected float scalingFactor = 1f;
     // Number of planer quads per patch. This value directly controls the 
     // complexity of the geometry generated.
     protected int quads = 32;
     // Minimal depth for spliting. The planet will start at this depth
     // no matter the distance from camera
-    protected int minDepth = 1;
+    protected int minDepth = 0;
     // Max depth for splitting. The planet will only split down to this depth
     // no matter the distance from the camera
     protected int maxDepth = 10;
@@ -62,6 +57,7 @@ public class Planet extends Node {
     protected boolean wireframeMode;
     protected boolean oceanFloorCulling;
     protected Vector3f planetToCamera;
+    protected float distanceToCamera;
     
     /**
     * <code>Planet</code>
@@ -116,17 +112,18 @@ public class Planet extends Node {
     }
     
     public void setCameraPosition(Vector3f position) {
-        
         // get vector between planet and camera
         this.planetToCamera = position.subtract(this.getLocalTranslation());
+        // get distance to surface
+        this.distanceToCamera= this.planetToCamera.length() - this.baseRadius;
         
         // Update camera positions for all quads
-        int currentMaxDepth = 0;
+        int currentTerrainMaxDepth = 0;
         for (int i = 0; i < 6; i++) {
             if (terrainSide[i] != null) {
                 terrainSide[i].setCameraPosition(position);
                 // get current max depth of quad for skirt toggling
-                currentMaxDepth = Math.max(currentMaxDepth, terrainSide[i].getCurrentMaxDepth());                
+                currentTerrainMaxDepth = Math.max(currentTerrainMaxDepth, terrainSide[i].getCurrentMaxDepth());                
             }
             if (oceanSide[i] != null) {
                 oceanSide[i].setCameraPosition(position);
@@ -135,45 +132,33 @@ public class Planet extends Node {
         
         boolean skirting;
         // Are we at minDepth?
-        if (currentMaxDepth == this.minDepth ) {
-            // Turn off skirting if entire sphere is at minDepth
+        if (currentTerrainMaxDepth == this.minDepth ) {
+            // Turn off skirting if entire terrain is at minDepth
             skirting = false;
-            // swap ocean to sky bucket to avoid z-fighting
-            if (oceanNode != null)
-                oceanNode.setQueueBucket(queueBucket.Opaque);
         } else {
             //otherwise turn on skirting
             skirting = true;
-            // swap ocean to regular bucket
-            if (oceanNode != null)
-                oceanNode.setQueueBucket(queueBucket.Opaque);
         }
-        // Go through and set skirting on all quads
+        // Go through and set skirting on all terrain quads
         for (int i = 0; i < 6; i++) {
             if (terrainSide[i] != null)
                 terrainSide[i].setSkirting(skirting);
         }
         
-        // If we get close to the ocean floor, turn it on so we can see it.
-        // It's normally turned off to avoid z-fighting issues
-        if (oceanNode != null) {
-            float distance = this.planetToCamera.length() - this.baseRadius;
-            float floorThreshold = this.baseRadius / 100.0f;
-            if (this.oceanFloorCulling)
-                if (distance <= floorThreshold) {
-                    this.oceanFloorCulling = false;
-                    setOceanFloorCulling(this.oceanFloorCulling);
-                }
-            if (!this.oceanFloorCulling)
-                if (distance > floorThreshold) {
-                    this.oceanFloorCulling = true;
-                    setOceanFloorCulling(this.oceanFloorCulling);
-                }             
-        }
+        
+        
     }
     
     public Node getPlanetNode() {
         return this.planetNode;
+    }
+    
+    public Node getTerrainNode() {
+        return this.terrainNode;
+    }
+    
+    public Node getOceanNode() {
+        return this.oceanNode;
     }
     
     public float getRadius() {
@@ -188,6 +173,10 @@ public class Planet extends Node {
         return this.planetToCamera;
     }
     
+    public float getDistanceToCamera() {
+        return this.distanceToCamera;
+    }
+    
     public void toogleWireframe() {
         if (this.wireframeMode)
             wireframeMode = false;
@@ -200,6 +189,8 @@ public class Planet extends Node {
         for (int i = 0; i < 6; i++) {
             if (terrainSide[i] != null)
                 terrainSide[i].setWireframe(wireframeMode);
+            if (oceanSide[i] != null)
+                oceanSide[i].setWireframe(wireframeMode);
         }      
     }
     
@@ -221,7 +212,6 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 this.dataSource,
                 this.quads,
                 0,
@@ -243,7 +233,6 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 this.dataSource,
                 this.quads,
                 0,
@@ -265,7 +254,6 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 this.dataSource,
                 this.quads,
                 0,
@@ -287,7 +275,6 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 this.dataSource,
                 this.quads,
                 0,
@@ -309,7 +296,6 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 this.dataSource,
                 this.quads,
                 0,
@@ -331,7 +317,6 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 this.dataSource,
                 this.quads,
                 0,
@@ -340,27 +325,14 @@ public class Planet extends Node {
                 null,
                 0);  
     }
-    
-    private void setOceanFloorCulling(boolean cull) {        
-        if (this.terrainMaterial.getMaterialDef().getMaterialParam("CullOceanFloor") != null) {
-            for (int i = 0; i < 6; i++) {
-                if (terrainSide[i] != null)
-                    terrainSide[i].setMaterialParam("CullOceanFloor", VarType.Boolean, new Boolean(cull).toString());
-            }
-        }
-    }
-    
+ 
     private void prepareOcean() {        
         this.oceanNode = new Node("OceanNode");
         planetNode.attachChild(oceanNode);
-             
-        //Mesh sphere = new Sphere(100, 100, this.baseRadius + (this.baseRadius * 0.00025f), false, false);
-        //Geometry ocean = new Geometry("Ocean", sphere);
         
-        //ocean.setMaterial(this.oceanMaterial);
-        //ocean.rotate( FastMath.HALF_PI, 0, 0);
-        
-        //this.oceanNode.attachChild(ocean);
+        int quads = this.quads;
+        int minDepth = 0;
+        int maxDepth = this.maxDepth;
         
         SimpleHeightDataSource dataSource = new SimpleHeightDataSource();
         
@@ -377,12 +349,11 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 dataSource,
-                this.quads,
+                quads,
                 0,
-                this.minDepth,
-                this.maxDepth,
+                minDepth,
+                maxDepth,
                 null,
                 0);
    
@@ -399,12 +370,11 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 dataSource,
-                this.quads,
+                quads,
                 0,
-                this.minDepth,
-                this.maxDepth,
+                minDepth,
+                maxDepth,
                 null,
                 0);
 
@@ -421,12 +391,11 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 dataSource,
-                this.quads,
+                quads,
                 0,
-                this.minDepth,
-                this.maxDepth,
+                minDepth,
+                maxDepth,
                 null,
                 0);
 
@@ -443,12 +412,11 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 dataSource,
-                this.quads,
+                quads,
                 0,
-                this.minDepth,
-                this.maxDepth,
+                minDepth,
+                maxDepth,
                 null,
                 0);
       
@@ -465,12 +433,11 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 dataSource,
-                this.quads,
+                quads,
                 0,
-                this.minDepth,
-                this.maxDepth,
+                minDepth,
+                maxDepth,
                 null,
                 0);
         
@@ -487,12 +454,11 @@ public class Planet extends Node {
                 0f,
                 FastMath.pow(2.0f, 20f),
                 this.baseRadius,
-                this.scalingFactor,
                 dataSource,
-                this.quads,
+                quads,
                 0,
-                this.minDepth,
-                this.maxDepth,
+                minDepth,
+                maxDepth,
                 null,
                 0);  
         

@@ -5,7 +5,9 @@ uniform mat4 g_WorldViewProjectionMatrix;
 uniform mat4 g_WorldViewMatrix;
 uniform mat3 g_NormalMatrix;
 uniform mat4 g_ViewMatrix;
+#ifdef LOGARITHIMIC_DEPTH_BUFFER
 uniform vec2 g_FrustumNearFar;
+#endif
 
 uniform vec4 m_Ambient;
 uniform vec4 m_Diffuse;
@@ -132,80 +134,70 @@ vec2 computeLighting(in vec3 wvPos, in vec3 wvNorm, in vec3 wvViewDir, in vec4 w
 #endif
 
 void main(){
-   vec4 pos = vec4(inPosition, 1.0);
+    vec4 pos = vec4(inPosition, 1.0);
 
-   gl_Position = g_WorldViewProjectionMatrix * vec4(inPosition, 1.0);
-   const float C = 1.0;
-   gl_Position.z = (2*log(C*gl_Position.z + 1) / log(C*g_FrustumNearFar.y + 1) - 1) * gl_Position.w;
+    gl_Position = g_WorldViewProjectionMatrix * vec4(inPosition, 1.0);
+    #ifdef LOGARITHIMIC_DEPTH_BUFFER
+    const float C = 1.0;
+    gl_Position.z = (2*log(C*gl_Position.z + 1) / log(C*g_FrustumNearFar.y + 1) - 1) * gl_Position.w;
+    #endif
 
-   texCoord = inTexCoord;
-   #ifdef SEPARATE_TEXCOORD
-      texCoord2 = inTexCoord2;
-   #endif
+    texCoord = inTexCoord;
+    #ifdef SEPARATE_TEXCOORD
+    texCoord2 = inTexCoord2;
+    #endif
 
-   vec3 wvPosition = (g_WorldViewMatrix * pos).xyz;
-   vec3 wvNormal  = normalize(g_NormalMatrix * inNormal);
-   vec3 viewDir = normalize(-wvPosition);
-  
-       //vec4 lightColor = g_LightColor[gl_InstanceID];
-       //vec4 lightPos   = g_LightPosition[gl_InstanceID];
-       //vec4 wvLightPos = (g_ViewMatrix * vec4(lightPos.xyz, lightColor.w));
-       //wvLightPos.w = lightPos.w;
+    vec3 wvPosition = (g_WorldViewMatrix * pos).xyz;
+    vec3 wvNormal  = normalize(g_NormalMatrix * inNormal);
+    vec3 viewDir = normalize(-wvPosition);
 
-   vec4 wvLightPos = (g_ViewMatrix * vec4(g_LightPosition.xyz,clamp(g_LightColor.w,0.0,1.0)));
-   wvLightPos.w = g_LightPosition.w;
-   vec4 lightColor = g_LightColor;
+    vec4 wvLightPos = (g_ViewMatrix * vec4(g_LightPosition.xyz,clamp(g_LightColor.w,0.0,1.0)));
+    wvLightPos.w = g_LightPosition.w;
+    vec4 lightColor = g_LightColor;
 
-   #if defined(NORMALMAP) && !defined(VERTEX_LIGHTING)
-     vec3 wvTangent = normalize(g_NormalMatrix * inTangent.xyz);
-     vec3 wvBinormal = cross(wvNormal, wvTangent);
+    #if defined(NORMALMAP) && !defined(VERTEX_LIGHTING)
+    vec3 wvTangent = normalize(g_NormalMatrix * inTangent.xyz);
+    vec3 wvBinormal = cross(wvNormal, wvTangent);
 
-     mat3 tbnMat = mat3(wvTangent, wvBinormal * -inTangent.w,wvNormal);
-     
-     //vPosition = wvPosition * tbnMat;
-     vViewDir  = viewDir * tbnMat;
-     lightComputeDir(wvPosition, lightColor, wvLightPos, vLightDir);
-     vLightDir.xyz = (vLightDir.xyz * tbnMat).xyz;
-   #elif !defined(VERTEX_LIGHTING)
-     vNormal = wvNormal;
+    mat3 tbnMat = mat3(wvTangent, wvBinormal * -inTangent.w,wvNormal);
 
-     //vPosition = wvPosition;
-     vViewDir = viewDir;
+    vViewDir  = viewDir * tbnMat;
+    lightComputeDir(wvPosition, lightColor, wvLightPos, vLightDir);
+    vLightDir.xyz = (vLightDir.xyz * tbnMat).xyz;
+    #elif !defined(VERTEX_LIGHTING)
+    vNormal = wvNormal;
 
-     lightComputeDir(wvPosition, lightColor, wvLightPos, vLightDir);
+    vViewDir = viewDir;
 
-     #ifdef V_TANGENT
-        vNormal = normalize(g_NormalMatrix * inTangent.xyz);
-        vNormal = -cross(cross(vLightDir.xyz, vNormal), vNormal);
-     #endif
-   #endif
+    lightComputeDir(wvPosition, lightColor, wvLightPos, vLightDir);
 
-   //computing spot direction in view space and unpacking spotlight cos
-//   spotVec = (g_ViewMatrix * vec4(g_LightDirection.xyz, 0.0) );
-//   spotVec.w  = floor(g_LightDirection.w) * 0.001;
-//   lightVec.w = fract(g_LightDirection.w);
+    #ifdef V_TANGENT
+    vNormal = normalize(g_NormalMatrix * inTangent.xyz);
+    vNormal = -cross(cross(vLightDir.xyz, vNormal), vNormal);
+    #endif
+    #endif
 
-   lightColor.w = 1.0;
-   #ifdef MATERIAL_COLORS
-      AmbientSum  = (m_Ambient  * g_AmbientLightColor).rgb;
-      DiffuseSum  =  m_Diffuse  * lightColor;
-      SpecularSum = (m_Specular * lightColor).rgb;
+    lightColor.w = 1.0;
+    #ifdef MATERIAL_COLORS
+    AmbientSum  = (m_Ambient  * g_AmbientLightColor).rgb;
+    DiffuseSum  =  m_Diffuse  * lightColor;
+    SpecularSum = (m_Specular * lightColor).rgb;
     #else
-      AmbientSum  = vec3(0.2, 0.2, 0.2) * g_AmbientLightColor.rgb; // Default: ambient color is dark gray
-      DiffuseSum  = lightColor;
-      SpecularSum = vec3(0.0);
+    AmbientSum  = vec3(0.2, 0.2, 0.2) * g_AmbientLightColor.rgb; // Default: ambient color is dark gray
+    DiffuseSum  = lightColor;
+    SpecularSum = vec3(0.0);
     #endif
 
     #ifdef VERTEX_COLOR
-      AmbientSum *= inColor.rgb;
-      DiffuseSum *= inColor;
+    AmbientSum *= inColor.rgb;
+    DiffuseSum *= inColor;
     #endif
 
     #ifdef VERTEX_LIGHTING
-       vertexLightValues = computeLighting(wvPosition, wvNormal, viewDir, wvLightPos);
+    vertexLightValues = computeLighting(wvPosition, wvNormal, viewDir, wvLightPos);
     #endif
 
     #ifdef USE_REFLECTION
-        computeRef();
+    computeRef();
     #endif 
 }

@@ -1,11 +1,11 @@
-Material Ocean : MatDefs/Ocean.j3md {
+Material Ocean : MatDefs/LogarithmicDepthBufferLighting.j3md {
      MaterialParameters {
         UseMaterialColors : true
-        Specular : 0.0 0.6 0.6 1.0
-        Diffuse : 0.0 0.4 0.4 1.0
-        Ambient : 0.0 0.2 0.2 1.0
-        Minnaert : true
-        Shininess : 1.0
+        Specular : 0.0 0.0 1.0 1.0
+        Diffuse : 0.0 0.0 0.6 1.0
+        Ambient : 0.0 0.0 0.4 1.0
+        Shininess : 1.5
+        LogarithmicDepthBuffer : false
      }
     AdditionalRenderState {
     }

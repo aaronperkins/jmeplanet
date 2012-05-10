@@ -75,7 +75,7 @@ public class PlanetAppState extends AbstractAppState {
     public Planet getClosestPlanet() {
         Planet cPlanet = null;
         for (Planet planet: this.planets ) {
-            if (cPlanet == null || cPlanet.getPlanetToCamera().length() > planet.getPlanetToCamera().length()) {
+            if (cPlanet == null || cPlanet.getDistanceToCamera() > planet.getDistanceToCamera()) {
                 cPlanet = planet;
             }
         }

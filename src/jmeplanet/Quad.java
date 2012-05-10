@@ -49,7 +49,6 @@ public class Quad {
     protected float texYMin;
     protected float texYMax;
     protected float baseRadius;
-    protected float scalingFactor;
     protected HeightDataSource dataSource;
     protected int quads;
     protected int depth;
@@ -84,7 +83,6 @@ public class Quad {
             float texYMin,
             float texYMax,
             float baseRadius,
-            float scalingFactor,
             HeightDataSource dataSource,
             int quads,
             int depth,
@@ -102,7 +100,6 @@ public class Quad {
         this.texYMin = texYMin;
         this.texYMax = texYMax;
         this.baseRadius = baseRadius;
-        this.scalingFactor = scalingFactor;
         this.dataSource = dataSource;
         this.quads = quads;
         this.depth = depth;
@@ -277,7 +274,6 @@ public class Quad {
                 this.texYMin,
                 this.texYMax,
                 this.baseRadius,
-                this.scalingFactor,
                 this.dataSource,
                 this.position,
                 false);
@@ -340,7 +336,6 @@ public class Quad {
                     (this.depth < this.maxDepth - 9) ? 0f : this.texYMin,
                     (this.depth < this.maxDepth - 9) ? FastMath.pow(2.0f, this.maxDepth - this.depth - 1.0f) : this.texYMin + (this.texYMax - this.texYMin) / 2.0f,
                     this.baseRadius,
-                    this.scalingFactor,
                     this.dataSource,
                     this.quads,
                     this.depth+1,
@@ -364,7 +359,6 @@ public class Quad {
                     (this.depth < this.maxDepth - 9) ? 0f : this.texYMin,
                     (this.depth < this.maxDepth - 9) ? FastMath.pow(2.0f, this.maxDepth - this.depth - 1.0f) : this.texYMin + (this.texYMax - this.texYMin) / 2.0f,
                     this.baseRadius,
-                    this.scalingFactor,
                     this.dataSource,
                     this.quads,
                     this.depth+1,
@@ -388,7 +382,6 @@ public class Quad {
                     (this.depth < this.maxDepth - 9) ? 0f : this.texYMin + (this.texYMax - this.texYMin) / 2.0f,
                     (this.depth < this.maxDepth - 9) ? FastMath.pow(2.0f, this.maxDepth - this.depth - 1.0f) : this.texYMax,
                     this.baseRadius,
-                    this.scalingFactor,
                     this.dataSource,
                     this.quads,
                     this.depth+1,
@@ -412,7 +405,6 @@ public class Quad {
                     (this.depth < this.maxDepth - 9) ? 0f : this.texYMin + (this.texYMax - this.texYMin) / 2.0f,
                     (this.depth < this.maxDepth - 9) ? FastMath.pow(2.0f, this.maxDepth - this.depth - 1.0f) : this.texYMax,
                     this.baseRadius,
-                    this.scalingFactor,
                     this.dataSource,
                     this.quads,
                     this.depth+1,
