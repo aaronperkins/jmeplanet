@@ -460,8 +460,7 @@ public class Planet extends Node {
                 minDepth,
                 maxDepth,
                 null,
-                0);  
-        
+                0); 
     } 
      
 }
