@@ -24,7 +24,11 @@ package jmeplanet;
 import com.jme3.material.Material;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
+import com.jme3.renderer.queue.RenderQueue.Bucket;
+import com.jme3.scene.Geometry;
+import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
+import com.jme3.scene.shape.Sphere;
 
 /**
  * Quad
@@ -38,10 +42,13 @@ public class Planet extends Node {
     
     protected Material terrainMaterial;
     protected Material oceanMaterial;
+    protected Material atmosphereMaterial;
     protected Node planetNode;
     protected Node terrainNode;
     protected Node oceanNode;
-    protected float baseRadius = 50.0f;
+    protected Node atmosphereNode;
+    protected float baseRadius;
+    protected float atmosphereRadius;
     protected HeightDataSource dataSource;
     // Number of planer quads per patch. This value directly controls the 
     // complexity of the geometry generated.
@@ -111,6 +118,14 @@ public class Planet extends Node {
             prepareOcean();
     }
     
+    public void createAtmosphere(Material material, float atmosphereRadius) {
+        this.atmosphereMaterial = material;
+        this.atmosphereRadius = atmosphereRadius;
+        
+        if (atmosphereNode == null)
+            prepareAtmosphere();
+    }
+    
     public void setCameraPosition(Vector3f position) {
         // get vector between planet and camera
         this.planetToCamera = position.subtract(this.getLocalTranslation());
@@ -143,10 +158,7 @@ public class Planet extends Node {
         for (int i = 0; i < 6; i++) {
             if (terrainSide[i] != null)
                 terrainSide[i].setSkirting(skirting);
-        }
-        
-        
-        
+        }   
     }
     
     public Node getPlanetNode() {
@@ -159,6 +171,10 @@ public class Planet extends Node {
     
     public Node getOceanNode() {
         return this.oceanNode;
+    }
+    
+    public Node getAtmosphereNode() {
+        return this.atmosphereNode;
     }
     
     public float getRadius() {
@@ -462,5 +478,20 @@ public class Planet extends Node {
                 null,
                 0); 
     } 
+    
+    private void prepareAtmosphere() {        
+        this.atmosphereNode = new Node("AtmosphereNode");
+        planetNode.attachChild(atmosphereNode);
+        
+        Mesh sphere = new Sphere(100, 100, this.atmosphereRadius, true, false);
+        Geometry atmosphere = new Geometry("Atmosphere", sphere);
+        
+        atmosphere.setQueueBucket(Bucket.Transparent);
+        
+        atmosphere.setMaterial(this.atmosphereMaterial);
+        //atmosphere.rotate( 0, FastMath.HALF_PI, 0);
+        
+        this.atmosphereNode.attachChild(atmosphere);  
+    }
      
 }

@@ -1,0 +1,33 @@
+MaterialDef PlanetAtmosphere {
+
+    MaterialParameters {
+        Texture2D AtmosphereGradient
+        Float AtmosphereRadius
+        Float SurfaceRadius
+        Float StretchAmount
+        Float Atmosphere_G
+    }
+
+    Technique {
+        LightMode SinglePass
+        VertexShader GLSL100:   MatDefs/PlanetAtmosphere.vert
+        FragmentShader GLSL100: MatDefs/PlanetAtmosphere.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            WorldMatrix
+            ViewMatrixInverse
+            CameraPosition
+            FrustumNearFar
+        }
+
+        RenderState {
+            FaceCull Off
+            Blend AlphaAdditive
+            DepthTest On
+            DepthWrite On
+        }
+
+    }
+
+}

@@ -66,7 +66,7 @@ public class App extends SimpleApplication {
         
         // Add sun
         DirectionalLight sun = new DirectionalLight();
-        sun.setDirection(new Vector3f(-0.1f, -0.7f, -1.0f));
+        sun.setDirection(new Vector3f(1f, -1f, 0f));
         rootNode.addLight(sun);
         
         // Add sky
@@ -90,7 +90,7 @@ public class App extends SimpleApplication {
         Planet planet = createEarthLikePlanet(63710.0f, 800f, 4);
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);
-        planet.setLocalTranslation(0f, 0f, 0f);
+        //planet.setLocalTranslation(50000f, 0f, 0f);
         
         // Add moon
         Planet moon = createMoonLikePlanet(20000, 300, 5);
@@ -205,6 +205,18 @@ public class App extends SimpleApplication {
         //oceanMaterial.setColor("Color", ColorRGBA.Blue);
         oceanMaterial.setBoolean("LogarithmicDepthBuffer", true);
         planet.createOcean(oceanMaterial);
+        
+        // create atmosphere
+        Material atmosphereMaterial = new Material(this.assetManager, "MatDefs/PlanetAtmosphere.j3md");
+        float atmosphereRadius = radius + (radius * .05f);
+        Texture atmosphereGradient = this.assetManager.loadTexture("Textures/atmosphereGradient.jpg");
+        atmosphereMaterial.setTexture("AtmosphereGradient", atmosphereGradient);
+        atmosphereMaterial.setFloat("SurfaceRadius", radius);
+        atmosphereMaterial.setFloat("AtmosphereRadius", atmosphereRadius);
+        atmosphereMaterial.setFloat("StretchAmount", .25f);
+        atmosphereMaterial.setFloat("Atmosphere_G", -95f);;
+
+        planet.createAtmosphere(atmosphereMaterial, atmosphereRadius);
         
         return planet;
     }
