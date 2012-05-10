@@ -19,7 +19,6 @@ varying vec3 AmbientSum;
 varying vec4 DiffuseSum;
 
 uniform vec4 g_LightDirection;
-//varying vec3 vPosition;
 varying vec3 vViewDir;
 varying vec4 vLightDir;
 varying vec3 lightVec;
@@ -115,19 +114,6 @@ vec2 computeLighting(in vec3 wvNorm, in vec3 wvViewDir, in vec3 wvLightDir){
 void main() {
     // Compute height of position from surface of planet
     float height = length(vec4(m_patchCenter, 1.0) + position) - m_planetRadius;
-    
-    // Cull anything below 0 height
-    #ifdef CULL_OCEAN_FLOOR
-        if (height <= 0) {
-            gl_FragDepth = 1;
-            gl_FragColor.rgb = vec4(0,0,0,1);
-            return;
-        }
-        else
-        {
-            gl_FragDepth = gl_FragCoord.z;
-        }
-    #endif
 
     vec4 color = generateTerrainColor(height);
 
@@ -137,5 +123,5 @@ void main() {
 
     vec2 light = computeLighting(vNormal, viewDir, lightDir.xyz);
 
-    gl_FragColor.rgb =  AmbientSum * color.rgb + DiffuseSum.rgb * color.rgb * vec3(light.x);   
+    gl_FragColor.rgb =  AmbientSum * color.rgb + DiffuseSum.rgb * color.rgb * vec3(light.x);
 }

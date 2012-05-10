@@ -31,7 +31,7 @@ attribute vec2 inTexCoord;
 attribute vec3 inNormal;
 
 varying vec3 lightVec;
-varying vec4 position;
+//varying vec4 spotVec;
 
 #ifdef VERTEX_COLOR
   attribute vec4 inColor;
@@ -49,6 +49,35 @@ varying vec4 position;
 #else
   varying vec2 vertexLightValues;
   uniform vec4 g_LightDirection;
+#endif
+
+#ifdef USE_REFLECTION
+    uniform vec3 g_CameraPosition;
+    uniform mat4 g_WorldMatrix;
+
+    uniform vec3 m_FresnelParams;
+    varying vec4 refVec;
+
+
+    /**
+     * Input:
+     * attribute inPosition
+     * attribute inNormal
+     * uniform g_WorldMatrix
+     * uniform g_CameraPosition
+     *
+     * Output:
+     * varying refVec
+     */
+    void computeRef(){
+        vec3 worldPos = (g_WorldMatrix * vec4(inPosition,1.0)).xyz;
+
+        vec3 I = normalize( g_CameraPosition - worldPos  ).xyz;
+        vec3 N = normalize( (g_WorldMatrix * vec4(inNormal, 0.0)).xyz );
+
+        refVec.xyz = reflect(I, N);
+        refVec.w   = m_FresnelParams.x + m_FresnelParams.y * pow(1.0 + dot(I, N), m_FresnelParams.z);
+    }
 #endif
 
 // JME3 lights in world space
@@ -103,15 +132,13 @@ vec2 computeLighting(in vec3 wvPos, in vec3 wvNorm, in vec3 wvViewDir, in vec4 w
 #endif
 
 void main(){
-    vec4 pos = vec4(inPosition, 1.0);
-    position = vec4(inPosition,0.0);
-   
-    gl_Position = g_WorldViewProjectionMatrix * vec4(inPosition, 1.0);
+   vec4 pos = vec4(inPosition, 1.0);
 
-    const float C = 1.0;
-    gl_Position.z = (2*log(C*gl_Position.z + 1) / log(C*g_FrustumNearFar.y + 1) - 1) * gl_Position.w;
+   gl_Position = g_WorldViewProjectionMatrix * vec4(inPosition, 1.0);
+   const float C = 1.0;
+   gl_Position.z = (2*log(C*gl_Position.z + 1) / log(C*g_FrustumNearFar.y + 1) - 1) * gl_Position.w;
 
-    texCoord = inTexCoord;
+   texCoord = inTexCoord;
    #ifdef SEPARATE_TEXCOORD
       texCoord2 = inTexCoord2;
    #endif
@@ -136,8 +163,7 @@ void main(){
      mat3 tbnMat = mat3(wvTangent, wvBinormal * -inTangent.w,wvNormal);
      
      //vPosition = wvPosition * tbnMat;
-     //vViewDir  = viewDir * tbnMat;
-     vViewDir  = -wvPosition * tbnMat;
+     vViewDir  = viewDir * tbnMat;
      lightComputeDir(wvPosition, lightColor, wvLightPos, vLightDir);
      vLightDir.xyz = (vLightDir.xyz * tbnMat).xyz;
    #elif !defined(VERTEX_LIGHTING)
@@ -179,6 +205,7 @@ void main(){
        vertexLightValues = computeLighting(wvPosition, wvNormal, viewDir, wvLightPos);
     #endif
 
+    #ifdef USE_REFLECTION
+        computeRef();
+    #endif 
 }
-
-

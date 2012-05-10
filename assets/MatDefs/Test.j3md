@@ -1,0 +1,17 @@
+MaterialDef My MaterialDef {
+
+    MaterialParameters {
+        Vector4 Color
+    }
+
+    Technique {
+        VertexShader GLSL100:   MatDefs/Test.vert
+        FragmentShader GLSL100: MatDefs/Test.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            FrustumNearFar
+        }
+    }
+
+}

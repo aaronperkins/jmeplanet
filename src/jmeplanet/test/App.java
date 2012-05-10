@@ -12,6 +12,7 @@ import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
+import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.scene.Node;
 
@@ -53,9 +54,9 @@ public class App extends SimpleApplication {
         inputManager.addListener(actionListener, "COLLISION_TEST"); 
         
         // Setup camera
-        this.getCamera().setFrustumFar(200000f);
+        this.getCamera().setFrustumFar(10000000f);
         this.getCamera().setFrustumNear(1f);
-        this.getCamera().setLocation(new Vector3f(0f, 0f, 40000f));
+        this.getCamera().setLocation(new Vector3f(0f, 0f, 100000f));
         
         // Add sun
         DirectionalLight sun = new DirectionalLight();
@@ -72,16 +73,16 @@ public class App extends SimpleApplication {
         stateManager.attach(planetAppState);
         
         // Add planet
-        Planet planet = createEarthLikePlanet(10000, 250, 4);
+        Planet planet = createEarthLikePlanet(63710.0f, 400f, 4);
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);
         planet.setLocalTranslation(0f, 0f, 0f);
         
         // Add moon
-        Planet moon = createMoonLikePlanet(2000, 100, 6);
+        Planet moon = createMoonLikePlanet(20000, 200, 5);
         planetAppState.addPlanet(moon);
         rootNode.attachChild(moon);
-        moon.setLocalTranslation(-20000f, 0f, 0f);
+        moon.setLocalTranslation(-150000f, 0f, 0f);
 
     }
     
@@ -92,7 +93,7 @@ public class App extends SimpleApplication {
         if (planet != null && planet.getPlanetToCamera() != null) {
             float cameraHeight = planet.getPlanetToCamera().length();
             this.getFlyByCamera().setMoveSpeed(
-                    FastMath.clamp(cameraHeight - planet.getRadius(), 5, 10000));
+                    FastMath.clamp(cameraHeight - planet.getRadius(), 5, 100000));
         }
         
     }
@@ -142,10 +143,8 @@ public class App extends SimpleApplication {
         planetMaterial.setTexture("region4ColorMap", snow);
         planetMaterial.setVector3("region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
         
-        //planetMaterial = new Material(this.assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        //planetMaterial.setBoolean("VertexColor", true);
-        //planetMaterial = new Material(this.assetManager, "Common/MatDefs/Light/Lighting.j3md");
-        //planetMaterial.setBoolean("UseVertexColor", true);
+        //planetMaterial = new Material(this.assetManager, "MatDefs/Test.j3md");
+        //planetMaterial.setColor("Color", ColorRGBA.Green);
 
          // Create height data source
         FractalDataSource dataSource = new FractalDataSource(seed);
@@ -156,6 +155,8 @@ public class App extends SimpleApplication {
         
         // create ocean
         Material oceanmat = assetManager.loadMaterial("Materials/Ocean.j3m");
+        //Material oceanmat = new Material(this.assetManager, "MatDefs/Test.j3md");
+        //oceanmat.setColor("Color", ColorRGBA.Blue);
         planet.createOcean(oceanmat);
         
         return planet;

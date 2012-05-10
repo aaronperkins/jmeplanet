@@ -42,6 +42,7 @@ MaterialDef PlanetTerrain {
 			NormalMatrix
                         WorldViewMatrix
                         ViewMatrix
+                        FrustumNearFar
 		}
 
                 Defines {

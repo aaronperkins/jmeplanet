@@ -1,43 +1,11 @@
-Material Ocean : MatDefs/Displace.j3md {
+Material Ocean : MatDefs/Ocean.j3md {
      MaterialParameters {
-        Diffuse : 0.0 0.4 0.8 1
-        Ambient : 0.0 0.4 0.6 1
-        Specular : 0.0 0.6 0.6 1
         UseMaterialColors : true
-        Shininess : 3.6
-        WardIso : false
+        Specular : 0.0 0.6 0.6 1.0
+        Diffuse : 0.0 0.4 0.4 1.0
+        Ambient : 0.0 0.2 0.2 1.0
         Minnaert : true
-        LATC : false
-        SpeedX : 1.5
-        DeformX_Ripple : true
-        DeformY_Water : false
-        DeformX_Wave : false
-        DepthX : 0.1
-        SizeX : 0.5
-        MirrorX : false
-        XPlane : true
-        DeformX_Pulse : false
-        SizeZ : 0.1
-        SizeY : 0.1
-        DeformX_Swell : false
-        DeformX_Water : false
-        Offset1X : 0.0
-        DirX : 0
-        RotationX : 0.0
-        DeformX_Warble : false
-        VTangent : false
-        ZPlane : false
-        DeformY_Ripple : true
-        DeformZ_Ripple : false
-        SpeedZ : 1.0
-        SpeedY : 1.0
-        DepthY : 0.1
-        DepthZ : 0.1
-        EnvMapAsSphereMap : false
-        SeparateTexCoord : false
-        ParallaxHeight : 0.0
-        DeformY_Wave : true
-        DeformZ_Warble : false
+        Shininess : 1.0
      }
     AdditionalRenderState {
     }

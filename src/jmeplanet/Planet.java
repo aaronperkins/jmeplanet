@@ -58,6 +58,7 @@ public class Planet extends Node {
     // no matter the distance from the camera
     protected int maxDepth = 10;
     protected Quad[] terrainSide = new Quad[6];
+    protected Quad[] oceanSide = new Quad[6];
     protected boolean wireframeMode;
     protected boolean oceanFloorCulling;
     protected Vector3f planetToCamera;
@@ -127,6 +128,9 @@ public class Planet extends Node {
                 // get current max depth of quad for skirt toggling
                 currentMaxDepth = Math.max(currentMaxDepth, terrainSide[i].getCurrentMaxDepth());                
             }
+            if (oceanSide[i] != null) {
+                oceanSide[i].setCameraPosition(position);
+            }
         }
         
         boolean skirting;
@@ -136,7 +140,7 @@ public class Planet extends Node {
             skirting = false;
             // swap ocean to sky bucket to avoid z-fighting
             if (oceanNode != null)
-                oceanNode.setQueueBucket(queueBucket.Sky);
+                oceanNode.setQueueBucket(queueBucket.Opaque);
         } else {
             //otherwise turn on skirting
             skirting = true;
@@ -350,13 +354,148 @@ public class Planet extends Node {
         this.oceanNode = new Node("OceanNode");
         planetNode.attachChild(oceanNode);
              
-        Mesh sphere = new Sphere(100, 100, this.baseRadius + (this.baseRadius * 0.00025f), false, false);
-        Geometry ocean = new Geometry("Ocean", sphere);
+        //Mesh sphere = new Sphere(100, 100, this.baseRadius + (this.baseRadius * 0.00025f), false, false);
+        //Geometry ocean = new Geometry("Ocean", sphere);
         
-        ocean.setMaterial(this.oceanMaterial);
-        ocean.rotate( FastMath.HALF_PI, 0, 0);
+        //ocean.setMaterial(this.oceanMaterial);
+        //ocean.rotate( FastMath.HALF_PI, 0, 0);
         
-        this.oceanNode.attachChild(ocean);
+        //this.oceanNode.attachChild(ocean);
+        
+        SimpleHeightDataSource dataSource = new SimpleHeightDataSource();
+        
+        Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
+        Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
+        oceanSide[0] = new Quad(
+                "OceanRight",
+                this.oceanMaterial,
+                this.oceanNode,
+                rightMin,
+                rightMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+   
+        Vector3f leftMin = new Vector3f(-1.0f, 1.0f, -1.0f);
+        Vector3f leftMax = new Vector3f(-1.0f, -1.0f, 1.0f);
+        oceanSide[1] = new Quad(
+                "OceanLeft",
+                this.oceanMaterial,
+                this.oceanNode,
+                leftMin,
+                leftMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+
+        Vector3f topMin = new Vector3f(-1.0f, 1.0f, -1.0f);
+        Vector3f topMax = new Vector3f(1.0f, 1.0f, 1.0f);
+        oceanSide[2] = new Quad(
+                "OceanTop",
+                this.oceanMaterial,
+                this.oceanNode,
+                topMin,
+                topMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+
+        Vector3f bottomMin = new Vector3f(-1.0f, -1.0f, 1.0f);
+        Vector3f bottomMax = new Vector3f(1.0f, -1.0f, -1.0f);
+        oceanSide[3] = new Quad(
+                "OceanBottom",
+                this.oceanMaterial,
+                this.oceanNode,
+                bottomMin,
+                bottomMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+      
+        Vector3f backMin = new Vector3f(1.0f, 1.0f, -1.0f);
+        Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
+        oceanSide[5] = new Quad(
+                "OceanBack",
+                this.oceanMaterial,
+                this.oceanNode,
+                backMin,
+                backMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);
+        
+        Vector3f frontMin = new Vector3f(-1.0f, 1.0f, 1.0f);
+        Vector3f frontMax = new Vector3f(1.0f, -1.0f, 1.0f);
+        oceanSide[4] = new Quad(
+                "OceanFront",
+                this.oceanMaterial,
+                this.oceanNode,
+                frontMin,
+                frontMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.baseRadius,
+                this.scalingFactor,
+                dataSource,
+                this.quads,
+                0,
+                this.minDepth,
+                this.maxDepth,
+                null,
+                0);  
+        
     } 
      
 }
