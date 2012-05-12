@@ -3,10 +3,10 @@ uniform mat4 g_WorldViewProjectionMatrix;
 uniform vec2 g_FrustumNearFar;
 #endif
 
-attribute vec3 inPosition;
+attribute vec4 inPosition;
 
 void main() { 
-    gl_Position = g_WorldViewProjectionMatrix * vec4(inPosition, 1.0);
+    gl_Position = g_WorldViewProjectionMatrix * inPosition;
 
     #ifdef LOGARITHIMIC_DEPTH_BUFFER
     const float C = 1.0;

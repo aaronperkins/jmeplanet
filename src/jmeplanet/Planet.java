@@ -61,6 +61,7 @@ public class Planet extends Node {
     protected int maxDepth = 10;
     protected Quad[] terrainSide = new Quad[6];
     protected Quad[] oceanSide = new Quad[6];
+    protected Quad[] atmosphereSide = new Quad[6];
     protected boolean wireframeMode;
     protected boolean oceanFloorCulling;
     protected Vector3f planetToCamera;
@@ -142,6 +143,9 @@ public class Planet extends Node {
             }
             if (oceanSide[i] != null) {
                 oceanSide[i].setCameraPosition(position);
+            }
+            if (atmosphereSide[i] != null) {
+                atmosphereSide[i].setCameraPosition(position);
             }
         }
         
@@ -485,13 +489,144 @@ public class Planet extends Node {
         
         Mesh sphere = new Sphere(100, 100, this.atmosphereRadius, true, false);
         Geometry atmosphere = new Geometry("Atmosphere", sphere);
-        
-        atmosphere.setQueueBucket(Bucket.Transparent);
-        
         atmosphere.setMaterial(this.atmosphereMaterial);
         //atmosphere.rotate( 0, FastMath.HALF_PI, 0);
-        
         this.atmosphereNode.attachChild(atmosphere);  
+
+        //atmosphereNode.setQueueBucket(Bucket.Transparent);
+        /*
+        int quads = this.quads;
+        int minDepth = 0;
+        int maxDepth = 0;
+        
+        SimpleHeightDataSource dataSource = new SimpleHeightDataSource();
+        
+        Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
+        Vector3f rightMax = new Vector3f(1.0f, -1.0f, -1.0f);
+        atmosphereSide[0] = new Quad(
+                "AtmosphereRight",
+                this.atmosphereMaterial,
+                this.atmosphereNode,
+                rightMin,
+                rightMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.atmosphereRadius,
+                dataSource,
+                quads,
+                0,
+                minDepth,
+                maxDepth,
+                null,
+                0);
+   
+        Vector3f leftMin = new Vector3f(-1.0f, 1.0f, -1.0f);
+        Vector3f leftMax = new Vector3f(-1.0f, -1.0f, 1.0f);
+        atmosphereSide[1] = new Quad(
+                "AtmosphereLeft",
+                this.atmosphereMaterial,
+                this.atmosphereNode,
+                leftMin,
+                leftMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.atmosphereRadius,
+                dataSource,
+                quads,
+                0,
+                minDepth,
+                maxDepth,
+                null,
+                0);
+
+        Vector3f topMin = new Vector3f(-1.0f, 1.0f, -1.0f);
+        Vector3f topMax = new Vector3f(1.0f, 1.0f, 1.0f);
+        atmosphereSide[2] = new Quad(
+                "AtmosphereTop",
+                this.atmosphereMaterial,
+                this.atmosphereNode,
+                topMin,
+                topMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.atmosphereRadius,
+                dataSource,
+                quads,
+                0,
+                minDepth,
+                maxDepth,
+                null,
+                0);
+
+        Vector3f bottomMin = new Vector3f(-1.0f, -1.0f, 1.0f);
+        Vector3f bottomMax = new Vector3f(1.0f, -1.0f, -1.0f);
+        atmosphereSide[3] = new Quad(
+                "AtmosphereBottom",
+                this.atmosphereMaterial,
+                this.atmosphereNode,
+                bottomMin,
+                bottomMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.atmosphereRadius,
+                dataSource,
+                quads,
+                0,
+                minDepth,
+                maxDepth,
+                null,
+                0);
+      
+        Vector3f backMin = new Vector3f(1.0f, 1.0f, -1.0f);
+        Vector3f backMax = new Vector3f(-1.0f, -1.0f, -1.0f);
+        atmosphereSide[5] = new Quad(
+                "AtmosphereBack",
+                this.atmosphereMaterial,
+                this.atmosphereNode,
+                backMin,
+                backMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.atmosphereRadius,
+                dataSource,
+                quads,
+                0,
+                minDepth,
+                maxDepth,
+                null,
+                0);
+        
+        Vector3f frontMin = new Vector3f(-1.0f, 1.0f, 1.0f);
+        Vector3f frontMax = new Vector3f(1.0f, -1.0f, 1.0f);
+        atmosphereSide[4] = new Quad(
+                "AtmosphereFront",
+                this.atmosphereMaterial,
+                this.atmosphereNode,
+                frontMin,
+                frontMax,
+                0f,
+                FastMath.pow(2.0f, 20f),
+                0f,
+                FastMath.pow(2.0f, 20f),
+                this.atmosphereRadius,
+                dataSource,
+                quads,
+                0,
+                minDepth,
+                maxDepth,
+                null,
+                0); 
+       */
     }
      
 }

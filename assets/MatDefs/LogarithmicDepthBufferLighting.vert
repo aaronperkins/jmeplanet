@@ -28,7 +28,7 @@ varying vec3 AmbientSum;
 varying vec4 DiffuseSum;
 varying vec3 SpecularSum;
 
-attribute vec3 inPosition;
+attribute vec4 inPosition;
 attribute vec2 inTexCoord;
 attribute vec3 inNormal;
 
@@ -134,9 +134,7 @@ vec2 computeLighting(in vec3 wvPos, in vec3 wvNorm, in vec3 wvViewDir, in vec4 w
 #endif
 
 void main(){
-    vec4 pos = vec4(inPosition, 1.0);
-
-    gl_Position = g_WorldViewProjectionMatrix * vec4(inPosition, 1.0);
+    gl_Position = g_WorldViewProjectionMatrix * inPosition;
     #ifdef LOGARITHIMIC_DEPTH_BUFFER
     const float C = 1.0;
     gl_Position.z = (2*log(C*gl_Position.z + 1) / log(C*g_FrustumNearFar.y + 1) - 1) * gl_Position.w;
@@ -147,7 +145,7 @@ void main(){
     texCoord2 = inTexCoord2;
     #endif
 
-    vec3 wvPosition = (g_WorldViewMatrix * pos).xyz;
+    vec3 wvPosition = (g_WorldViewMatrix * inPosition).xyz;
     vec3 wvNormal  = normalize(g_NormalMatrix * inNormal);
     vec3 viewDir = normalize(-wvPosition);
 

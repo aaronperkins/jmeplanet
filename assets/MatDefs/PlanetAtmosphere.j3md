@@ -1,33 +1,42 @@
 MaterialDef PlanetAtmosphere {
 
     MaterialParameters {
-        Texture2D AtmosphereGradient
+        Float PlanetRadius
+        Float HeightScale
         Float AtmosphereRadius
-        Float SurfaceRadius
-        Float StretchAmount
-        Float Atmosphere_G
+        Float AtmosphereDensity
+        // Use to turn on the Logarithmic Depth Buffer
+        Boolean LogarithmicDepthBuffer
     }
 
     Technique {
-        LightMode SinglePass
+        LightMode MultiPass
         VertexShader GLSL100:   MatDefs/PlanetAtmosphere.vert
         FragmentShader GLSL100: MatDefs/PlanetAtmosphere.frag
 
         WorldParameters {
             WorldViewProjectionMatrix
             WorldMatrix
-            ViewMatrixInverse
+            NormalMatrix
+            WorldViewMatrix
             CameraPosition
             FrustumNearFar
         }
 
         RenderState {
-            FaceCull Off
-            Blend AlphaAdditive
-            DepthTest On
-            DepthWrite On
+            //FaceCull Back
+            //Blend Alpha
+            //DepthTest On
+            //DepthWrite On
         }
 
+        Defines {
+            LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer
+        }
+
+    }
+
+    Technique FixedFunc {
     }
 
 }

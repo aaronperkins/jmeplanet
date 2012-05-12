@@ -172,10 +172,10 @@ public class Quad {
             this.quadGeometry = new Geometry(this.name + "Geometry", patch.getMesh());
             
             // Set custom material parameters, if present
-            if (this.material.getMaterialDef().getMaterialParam("patchCenter") != null)
-                this.material.setVector3("patchCenter", this.quadCenter);
-            if (this.material.getMaterialDef().getMaterialParam("planetRadius") != null)
-                this.material.setFloat("planetRadius", this.baseRadius);
+            if (this.material.getMaterialDef().getMaterialParam("PatchCenter") != null)
+                this.material.setVector3("PatchCenter", this.quadCenter);
+            if (this.material.getMaterialDef().getMaterialParam("PlanetRadius") != null)
+                this.material.setFloat("PlanetRadius", this.baseRadius);
             
             this.quadGeometry.setMaterial(this.material);
         }

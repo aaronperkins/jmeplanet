@@ -168,23 +168,23 @@ public class App extends SimpleApplication {
         // shore texture
         Texture dirt = this.assetManager.loadTexture("Textures/dirt.jpg");
         dirt.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region1ColorMap", dirt);
-        planetMaterial.setVector3("region1", new Vector3f(0, heightScale * 0.2f, 0));
+        planetMaterial.setTexture("Region1ColorMap", dirt);
+        planetMaterial.setVector3("Region1", new Vector3f(0, heightScale * 0.2f, 0));
         // grass texture
         Texture grass = this.assetManager.loadTexture("Textures/grass.jpg");
         grass.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region2ColorMap", grass);
-        planetMaterial.setVector3("region2", new Vector3f(heightScale * 0.16f, heightScale * 0.88f, 0));
+        planetMaterial.setTexture("Region2ColorMap", grass);
+        planetMaterial.setVector3("Region2", new Vector3f(heightScale * 0.16f, heightScale * 0.88f, 0));
         // rock texture
         Texture rock = this.assetManager.loadTexture("Textures/rock.jpg");
         rock.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region3ColorMap", rock);
-        planetMaterial.setVector3("region3", new Vector3f(heightScale * 0.84f, heightScale * 1.36f, 0));
+        planetMaterial.setTexture("Region3ColorMap", rock);
+        planetMaterial.setVector3("Region3", new Vector3f(heightScale * 0.84f, heightScale * 1.36f, 0));
         // snow texture
         Texture snow = this.assetManager.loadTexture("Textures/snow.jpg");
         snow.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region4ColorMap", snow);
-        planetMaterial.setVector3("region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
+        planetMaterial.setTexture("Region4ColorMap", snow);
+        planetMaterial.setVector3("Region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
         
         //planetMaterial = new Material(this.assetManager, "MatDefs/LogarithmicDepthBufferSimple.j3md");
         //planetMaterial.setColor("Color", ColorRGBA.Green);
@@ -209,14 +209,12 @@ public class App extends SimpleApplication {
         // create atmosphere
         Material atmosphereMaterial = new Material(this.assetManager, "MatDefs/PlanetAtmosphere.j3md");
         float atmosphereRadius = radius + (radius * .05f);
-        Texture atmosphereGradient = this.assetManager.loadTexture("Textures/atmosphereGradient.jpg");
-        atmosphereMaterial.setTexture("AtmosphereGradient", atmosphereGradient);
-        atmosphereMaterial.setFloat("SurfaceRadius", radius);
+        atmosphereMaterial.setBoolean("LogarithmicDepthBuffer", true);
+        atmosphereMaterial.setFloat("PlanetRadius", radius);
         atmosphereMaterial.setFloat("AtmosphereRadius", atmosphereRadius);
-        atmosphereMaterial.setFloat("StretchAmount", .25f);
-        atmosphereMaterial.setFloat("Atmosphere_G", -95f);;
 
-        planet.createAtmosphere(atmosphereMaterial, atmosphereRadius);
+        //planet.createAtmosphere(atmosphereMaterial, atmosphereRadius);
+
         
         return planet;
     }
@@ -228,23 +226,23 @@ public class App extends SimpleApplication {
         // region1 texture
         Texture region1 = this.assetManager.loadTexture("Textures/moon.jpg");
         region1.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region1ColorMap", region1);
-        planetMaterial.setVector3("region1", new Vector3f(0, heightScale * 0.2f, 0));
+        planetMaterial.setTexture("Region1ColorMap", region1);
+        planetMaterial.setVector3("Region1", new Vector3f(0, heightScale * 0.2f, 0));
         // region2 texture
         Texture region2 = this.assetManager.loadTexture("Textures/moon.jpg");
         region2.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region2ColorMap", region2);
-        planetMaterial.setVector3("region2", new Vector3f(heightScale * 0.16f, heightScale * 0.88f, 0));
+        planetMaterial.setTexture("Region2ColorMap", region2);
+        planetMaterial.setVector3("Region2", new Vector3f(heightScale * 0.16f, heightScale * 0.88f, 0));
         // region3 texture
         Texture region3 = this.assetManager.loadTexture("Textures/rock.jpg");
         region3.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region3ColorMap", region3);
-        planetMaterial.setVector3("region3", new Vector3f(heightScale * 0.84f, heightScale * 1.36f, 0));
+        planetMaterial.setTexture("Region3ColorMap", region3);
+        planetMaterial.setVector3("Region3", new Vector3f(heightScale * 0.84f, heightScale * 1.36f, 0));
         // region4 texture
         Texture region4 = this.assetManager.loadTexture("Textures/rock.jpg");
         region4.setWrap(WrapMode.Repeat);
-        planetMaterial.setTexture("region4ColorMap", region4);
-        planetMaterial.setVector3("region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
+        planetMaterial.setTexture("Region4ColorMap", region4);
+        planetMaterial.setVector3("Region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
 
         // Turn on Logarithmic Depth Buffer to avoid z-fighting
         planetMaterial.setBoolean("LogarithmicDepthBuffer", true);

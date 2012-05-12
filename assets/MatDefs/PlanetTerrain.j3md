@@ -8,24 +8,18 @@ MaterialDef PlanetTerrain {
         //      regionX.z: the texture scale for the region
         //  it might not be the most elegant way for storing these 3 values, but it packs the data nicely :)
 	MaterialParameters {
-		Texture2D region1ColorMap
-		Texture2D region2ColorMap
-		Texture2D region3ColorMap
-		Texture2D region4ColorMap
-		Vector3 region1
-		Vector3 region2
-		Vector3 region3
-		Vector3 region4
+		Texture2D Region1ColorMap
+		Texture2D Region2ColorMap
+		Texture2D Region3ColorMap
+		Texture2D Region4ColorMap
+		Vector3 Region1
+		Vector3 Region2
+		Vector3 Region3
+		Vector3 Region4
 
                 // Used for height determination
-                Vector3 patchCenter
-                Float planetRadius
-                
-                // Ambient color
-                Color Ambient (MaterialAmbient)
-
-                // Use the provided ambient, diffuse, and specular colors
-                Boolean UseMaterialColors
+                Vector3 PatchCenter
+                Float PlanetRadius
 
                 // Use to turn on the Logarithmic Depth Buffer
                 Boolean LogarithmicDepthBuffer
@@ -46,8 +40,7 @@ MaterialDef PlanetTerrain {
 		}
 
                 Defines {
-                        MATERIAL_COLORS : UseMaterialColors
-                        LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer
+                    LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer
                 }
 	}
 
