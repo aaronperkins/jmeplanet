@@ -7,8 +7,8 @@ MaterialDef LogarithmicDepthBufferSimple {
     }
 
     Technique {
-        VertexShader GLSL100:   MatDefs/LogarithmicDepthBufferSimple.vert
-        FragmentShader GLSL100: MatDefs/LogarithmicDepthBufferSimple.frag
+        VertexShader GLSL100:   MatDefs/Planet/LogarithmicDepthBufferSimple.vert
+        FragmentShader GLSL100: MatDefs/Planet/LogarithmicDepthBufferSimple.frag
 
         WorldParameters {
             WorldViewProjectionMatrix

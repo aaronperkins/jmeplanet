@@ -21,9 +21,13 @@ THE SOFTWARE.
 */
 package jmeplanet.test;
 
+import com.jme3.app.DebugKeysAppState;
 import com.jme3.app.SimpleApplication;
-import com.jme3.collision.CollisionResult;
-import com.jme3.collision.CollisionResults;
+import com.jme3.app.StatsAppState;
+import com.jme3.bullet.BulletAppState;
+import com.jme3.bullet.collision.shapes.BoxCollisionShape;
+import com.jme3.bullet.collision.shapes.SphereCollisionShape;
+import com.jme3.bullet.control.RigidBodyControl;
 import com.jme3.system.AppSettings;
 import com.jme3.texture.Texture;
 import com.jme3.texture.Texture.WrapMode;
@@ -33,67 +37,75 @@ import com.jme3.math.Vector3f;
 import com.jme3.input.KeyInput;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
+import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.input.controls.MouseAxisTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
-import com.jme3.math.Ray;
-import com.jme3.scene.Geometry;
+import com.jme3.scene.CameraNode;
 import com.jme3.scene.Node;
-import com.jme3.scene.shape.Sphere;
+import com.jme3.scene.control.CameraControl;
+import com.jme3.scene.control.CameraControl.ControlDirection;
 
 import jmeplanet.Planet;
 import jmeplanet.FractalDataSource;
 import jmeplanet.PlanetAppState;
 
 /**
- * PlanetSimpleTest
+ * PlanetPhysicsTest
  * 
  */
-public class PlanetSimpleTest extends SimpleApplication {
+public class PlanetPhysicsTest extends SimpleApplication {
     
+    private BulletAppState bulletAppState;
     private PlanetAppState planetAppState;
-    private Geometry mark;
+    private CameraNode cameraNode;
+    private RigidBodyControl cameraNodePhysicsControl;
     
     public static void main(String[] args){
         AppSettings settings = new AppSettings(true);
         settings.setResolution(1024,768);
-        PlanetSimpleTest app = new PlanetSimpleTest();
+        PlanetPhysicsTest app = new PlanetPhysicsTest();
         
         app.setSettings(settings);
-        app.showSettings = true;
+        app.showSettings = false;
         app.start();
+    }
+    
+    public PlanetPhysicsTest() {
+        super( new StatsAppState(), new DebugKeysAppState() );
     }
  
     @Override
     public void simpleInitApp() {
+        
         // Only show severe errors in log
         java.util.logging.Logger.getLogger("com.jme3").setLevel(java.util.logging.Level.SEVERE);
         
-        // Toggle mouse cursor
-        inputManager.addMapping("TOGGLE_CURSOR", 
-                new MouseButtonTrigger(MouseInput.BUTTON_LEFT),
-                new KeyTrigger(KeyInput.KEY_SPACE));
-        inputManager.addListener(actionListener, "TOGGLE_CURSOR"); 
-        // Toggle wireframe
-        inputManager.addMapping("TOGGLE_WIREFRAME", 
-            new KeyTrigger(KeyInput.KEY_T));
-        inputManager.addListener(actionListener, "TOGGLE_WIREFRAME");
-        // Collision test
-        inputManager.addMapping("COLLISION_TEST", 
-            new MouseButtonTrigger(MouseInput.BUTTON_RIGHT));
-        inputManager.addListener(actionListener, "COLLISION_TEST"); 
+        // setup physics
+        bulletAppState = new BulletAppState();
+        stateManager.attach(bulletAppState);
+        bulletAppState.getPhysicsSpace().setGravity(Vector3f.ZERO);
+        
+        // setup input
+        setupInput();
         
         // Setup camera
         this.getCamera().setFrustumFar(10000000f);
         this.getCamera().setFrustumNear(1.0f);
         
-        // In orbit
-        this.getCamera().setLocation(new Vector3f(0f, 0f, 180000f));
-        
-        // On surface
-        //this.getCamera().setLocation(new Vector3f(-6657.5254f, 27401.822f, 57199.777f));
-        //this.getCamera().lookAtDirection(new Vector3f(0.06276598f, 0.94458306f, -0.3222158f), Vector3f.UNIT_Y);
+        // setup camera and camera node
+        CameraControl cameraControl = new CameraControl(this.getCamera(),ControlDirection.SpatialToCamera);
+        cameraNode = new CameraNode("Camera", cameraControl);
+        cameraNode.setLocalTranslation(new Vector3f(0f, 0f, 180000f));
+        cameraNode.rotate(0, FastMath.PI, 0);
+        cameraNodePhysicsControl = new RigidBodyControl(new BoxCollisionShape(new Vector3f(5f, 5f, 5f)), 1f);
+        cameraNode.addControl(cameraNodePhysicsControl);
+        rootNode.attachChild(cameraNode);
+        bulletAppState.getPhysicsSpace().add(cameraNode);
+        cameraNodePhysicsControl.setLinearDamping(0.8f);
+        cameraNodePhysicsControl.setAngularDamping(0.99f);
         
         // Add sun
         DirectionalLight sun = new DirectionalLight();
@@ -106,39 +118,60 @@ public class PlanetSimpleTest extends SimpleApplication {
         sceneNode.attachChild(Utility.createSkyBox(this.getAssetManager(), "Textures/blue-glow-1024.dds"));
         rootNode.attachChild(sceneNode);
         
-        // Create collision test mark
-        Sphere sphere = new Sphere(30, 30, 5f);
-        mark = new Geometry("mark", sphere);
-        Material mark_mat = new Material(assetManager, "MatDefs/Planet/LogarithmicDepthBufferSimple.j3md");
-        mark_mat.setBoolean("LogarithmicDepthBuffer", true);
-        mark_mat.setColor("Color", ColorRGBA.Red);
-        mark.setMaterial(mark_mat);
-        
         // Add planet app state
         planetAppState = new PlanetAppState();
         stateManager.attach(planetAppState);
         
         // Add planet
         Planet planet = createEarthLikePlanet(63710.0f, 800f, 4);
+        planet.addControl(new RigidBodyControl(new SphereCollisionShape(planet.getRadius() + 10f), 0f));
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);
+        bulletAppState.getPhysicsSpace().add(planet);
         
         // Add moon
         Planet moon = createMoonLikePlanet(20000, 300, 5);
+        moon.setLocalTranslation(-150000f, 0f, 0f);
+        moon.addControl(new RigidBodyControl(new SphereCollisionShape(moon.getRadius() + 10f), 0f));
         planetAppState.addPlanet(moon);
         rootNode.attachChild(moon);
-        moon.setLocalTranslation(-150000f, 0f, 0f);
+        bulletAppState.getPhysicsSpace().add(moon);
     }
     
     @Override
     public void simpleUpdate(float tpf) {
-        // slow camera down as we approach a planet
         Planet planet = planetAppState.getNearestPlanet();
         if (planet != null && planet.getPlanetToCamera() != null) {
-            //System.out.println(planet.getName() + ": " + planet.getDistanceToCamera());
-            this.getFlyByCamera().setMoveSpeed(
-                    FastMath.clamp(planet.getDistanceToCamera(), 5, 100000));
-        }     
+            cameraNodePhysicsControl.setGravity(planet.getPlanetToCamera().normalize().mult(-100f));
+            //System.out.println(planet.getName() + ": " + planet.getPlanetToCamera());
+            //System.out.println("Camera Speed: " + cameraNodePhysicsControl.getLinearVelocity());
+        }   
+    }
+    
+    private void setupInput() {
+        // Toggle mouse cursor
+        inputManager.addMapping("TOGGLE_CURSOR", 
+                new MouseButtonTrigger(MouseInput.BUTTON_LEFT),
+                new KeyTrigger(KeyInput.KEY_SPACE));
+        // Toggle wireframe
+        inputManager.addMapping("TOGGLE_WIREFRAME", 
+            new KeyTrigger(KeyInput.KEY_T));
+        // Movement keys
+        inputManager.addMapping("RotateLeft", new MouseAxisTrigger(MouseInput.AXIS_X, true),
+                                               new KeyTrigger(KeyInput.KEY_LEFT));
+        inputManager.addMapping("RotateRight", new MouseAxisTrigger(MouseInput.AXIS_X, false),
+                                                new KeyTrigger(KeyInput.KEY_RIGHT));
+        inputManager.addMapping("RotateDown", new MouseAxisTrigger(MouseInput.AXIS_Y, false),
+                                             new KeyTrigger(KeyInput.KEY_UP));
+        inputManager.addMapping("RotateUp", new MouseAxisTrigger(MouseInput.AXIS_Y, true),
+                                               new KeyTrigger(KeyInput.KEY_DOWN));
+        inputManager.addMapping("MoveLeft", new KeyTrigger(KeyInput.KEY_A));
+        inputManager.addMapping("MoveRight", new KeyTrigger(KeyInput.KEY_D));
+        inputManager.addMapping("MoveForward", new KeyTrigger(KeyInput.KEY_W));
+        inputManager.addMapping("MoveBackward", new KeyTrigger(KeyInput.KEY_S));
+        
+        inputManager.addListener(actionListener, "TOGGLE_WIREFRAME", "TOGGLE_CURSOR");
+        inputManager.addListener(analogListener, "MoveLeft","MoveRight","MoveForward","MoveBackward","RotateLeft","RotateRight","RotateUp","RotateDown" );
     }
     
     private ActionListener actionListener = new ActionListener(){
@@ -157,38 +190,41 @@ public class PlanetSimpleTest extends SimpleApplication {
                     planet.toogleWireframe();
                 }
             }
-
-            if (name.equals("COLLISION_TEST") && !pressed) {
-                CollisionResults results = new CollisionResults();
-                Ray ray = new Ray(cam.getLocation(), cam.getDirection());
-                
-                // Test collision with closest planet's terrain only
-                planetAppState.getNearestPlanet().getTerrainNode().collideWith(ray, results);
-
-                System.out.println("----- Collisions? " + results.size() + "-----");
-                for (int i = 0; i < results.size(); i++) {
-                  // For each hit, we know distance, impact point, name of geometry.
-                  float dist = results.getCollision(i).getDistance();
-                  Vector3f pt = results.getCollision(i).getContactPoint();
-                  String hit = results.getCollision(i).getGeometry().getName();
-                  System.out.println("* Collision #" + i);
-                  System.out.println("  You shot " + hit + " at " + pt + ", " + dist + " wu away.");
-                }
-
-                if (results.size() > 0) {
-                  // The closest collision point is what was truly hit:
-                  CollisionResult closest = results.getClosestCollision();
-                  // Let's interact - we mark the hit with a red dot.
-                  mark.setLocalTranslation(closest.getContactPoint());
-                  rootNode.attachChild(mark);
-                } else {
-                  // No hits? Then remove the red mark.
-                  rootNode.detachChild(mark);
-                }
-            }  
-             
+            
         }
-    }; 
+    };
+    
+    private AnalogListener analogListener = new AnalogListener() {
+        public void onAnalog(String name, float value, float tpf) {
+            
+            float linearSpeed = 10000f;
+            float angularSpeed = 50f;
+            tpf = 1;
+
+            if (name.equals("MoveLeft"))
+                cameraNodePhysicsControl.applyCentralForce(getCamera().getLeft().mult(linearSpeed * tpf));
+            if (name.equals("MoveRight"))
+                cameraNodePhysicsControl.applyCentralForce(getCamera().getLeft().mult(-linearSpeed * tpf));
+            if (name.equals("MoveForward"))
+                cameraNodePhysicsControl.applyCentralForce(getCamera().getDirection().mult(linearSpeed * tpf));
+            if (name.equals("MoveBackward"))
+                cameraNodePhysicsControl.applyCentralForce(getCamera().getDirection().mult(-linearSpeed * tpf));
+            
+            Vector3f xRotation = cameraNodePhysicsControl.getPhysicsRotation().getRotationColumn(0).normalize();
+            Vector3f yRotation = cameraNodePhysicsControl.getPhysicsRotation().getRotationColumn(1).normalize();
+            Vector3f zRotation = cameraNodePhysicsControl.getPhysicsRotation().getRotationColumn(2).normalize();
+
+            if (name.equals("RotateLeft"))
+                cameraNodePhysicsControl.applyTorque(yRotation.mult(angularSpeed * tpf));
+            if (name.equals("RotateRight"))
+                cameraNodePhysicsControl.applyTorque(yRotation.mult(-angularSpeed * tpf));
+            if (name.equals("RotateUp"))
+                cameraNodePhysicsControl.applyTorque(xRotation.mult(angularSpeed * tpf));
+            if (name.equals("RotateDown"))
+                cameraNodePhysicsControl.applyTorque(xRotation.mult(-angularSpeed * tpf));
+
+        }   
+    };
     
     private Planet createEarthLikePlanet(float radius, float heightScale, int seed) {
         boolean logarithmicDepthBuffer = true;
