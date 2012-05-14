@@ -2,9 +2,6 @@ uniform mat4 g_WorldViewProjectionMatrix;
 uniform mat4 g_WorldViewMatrix;
 uniform mat3 g_NormalMatrix;
 uniform mat4 g_ViewMatrix;
-#ifdef LOGARITHIMIC_DEPTH_BUFFER
-uniform vec2 g_FrustumNearFar;
-#endif
 
 uniform vec4 m_Ambient;
 uniform vec4 m_Diffuse;
@@ -32,6 +29,10 @@ varying vec3 vNormal;
 varying vec3 vViewDir;
 varying vec4 vLightDir;
 
+#ifdef LOGARITHIMIC_DEPTH_BUFFER
+varying vec4 positionProjectionSpace;
+#endif
+
 // JME3 lights in world space
 void lightComputeDir(in vec3 worldPos, in vec4 color, in vec4 position, out vec4 lightDir){
     float posLight = step(0.5, color.w);
@@ -46,10 +47,6 @@ void lightComputeDir(in vec3 worldPos, in vec4 color, in vec4 position, out vec4
 void main(){
     positionObjectSpace = inPosition;
     gl_Position = g_WorldViewProjectionMatrix * inPosition;
-    #ifdef LOGARITHIMIC_DEPTH_BUFFER
-    const float C = 1.0;
-    gl_Position.z = (2*log(C*gl_Position.z + 1) / log(C*g_FrustumNearFar.y + 1) - 1) * gl_Position.w;
-    #endif
 
     texCoord = inTexCoord;
 
@@ -66,7 +63,11 @@ void main(){
     lightComputeDir(wvPosition, lightColor, wvLightPos, vLightDir);
 
     lightColor.w = 1.0;
-    AmbientSum  = vec3(0.2, 0.2, 0.2) * g_AmbientLightColor.rgb; // Default: ambient color is dark gray
-    DiffuseSum  = lightColor;
-    SpecularSum = vec3(0.0);
+    AmbientSum  = (m_Ambient  * g_AmbientLightColor).rgb;
+    DiffuseSum  =  m_Diffuse  * lightColor;
+    SpecularSum = (m_Specular * lightColor).rgb;
+
+    #ifdef LOGARITHIMIC_DEPTH_BUFFER
+        positionProjectionSpace = gl_Position;
+    #endif
 }

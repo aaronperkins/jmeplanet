@@ -1,0 +1,26 @@
+MaterialDef PlanetFog {
+
+    MaterialParameters {
+        Int NumSamples
+        Int NumSamplesDepth
+        Texture2D Texture
+        Texture2D DepthTexture
+        Vector4 FogColor;
+        Float FogDensity;
+        Float FogDistance;
+    }
+
+    Technique {
+        VertexShader GLSL100:   Common/MatDefs/Post/Post.vert
+        FragmentShader GLSL100: MatDefs/PlanetFog.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            FrustumNearFar
+        }
+    }
+
+    Technique FixedFunc {
+    }
+
+}

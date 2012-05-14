@@ -22,13 +22,11 @@ THE SOFTWARE.
 package jmeplanet;
 
 import com.jme3.material.Material;
+import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.queue.RenderQueue.Bucket;
-import com.jme3.scene.Geometry;
-import com.jme3.scene.Mesh;
 import com.jme3.scene.Node;
-import com.jme3.scene.shape.Sphere;
 
 /**
  * Quad
@@ -55,7 +53,7 @@ public class Planet extends Node {
     protected int quads = 32;
     // Minimal depth for spliting. The planet will start at this depth
     // no matter the distance from camera
-    protected int minDepth = 0;
+    protected int minDepth = 1;
     // Max depth for splitting. The planet will only split down to this depth
     // no matter the distance from the camera
     protected int maxDepth = 10;
@@ -66,6 +64,14 @@ public class Planet extends Node {
     protected boolean oceanFloorCulling;
     protected Vector3f planetToCamera;
     protected float distanceToCamera;
+    
+    protected ColorRGBA atmosphereFogColor = new ColorRGBA(0.9f, 0.9f, 0.9f, 1.0f);
+    protected float atmosphereFogDistance = 0.5f; // percentage range 0 to 1
+    protected float atmosphereFogDensity = 10f; // multipler range 0.1 - 100
+    
+    protected ColorRGBA underwaterFogColor = new ColorRGBA(0.2f, 0.3f, 0.9f, 1.0f);
+    protected float underwaterFogDistance = 0.1f; // percentage range 0 to 1
+    protected float underwaterFogDensity = 10f; // multipler range 0.1 - 100
     
     /**
     * <code>Planet</code>
@@ -185,6 +191,10 @@ public class Planet extends Node {
         return this.baseRadius;
     }
     
+    public float getAtmosphereRadius() {
+        return this.atmosphereRadius;
+    }
+    
     public float getHeightScale() {
         return dataSource.getHeightScale();
     }
@@ -197,6 +207,43 @@ public class Planet extends Node {
         return this.distanceToCamera;
     }
     
+    public ColorRGBA getAtmosphereFogColor() {
+        return this.atmosphereFogColor;
+    }
+    public void setAtmosphereFogColor(ColorRGBA atmosphereFogColor) {
+        this.atmosphereFogColor = atmosphereFogColor;
+    }
+    public float getAtmosphereFogDistance() {
+        return this.atmosphereFogDistance;
+    }
+    public void setAtmosphereFogDistance(float atmosphereFogDistance) {
+        this.atmosphereFogDistance = atmosphereFogDistance;
+    }
+    public float getAtmosphereFogDensity() {
+        return this.atmosphereFogDensity;
+    }
+    public void setAtmosphereFogDensity(float atmosphereFogDensity) {
+        this.atmosphereFogDensity = atmosphereFogDensity;
+    }
+    public ColorRGBA getUnderwaterFogColor() {
+        return this.underwaterFogColor;
+    }
+    public void setUnderwaterFogColor(ColorRGBA underwaterFogColor) {
+        this.underwaterFogColor = underwaterFogColor;
+    }
+    public float getUnderwaterFogDistance() {
+        return this.underwaterFogDistance;
+    }
+    public void setUnderwaterFogDistance(float underwaterFogDistance) {
+        this.underwaterFogDistance = underwaterFogDistance;
+    }
+    public float getUnderwaterFogDensity() {
+        return this.underwaterFogDensity;
+    }
+    public void setUnderwaterFogDensity(float atmosphereFogDensity) {
+        this.underwaterFogDensity = underwaterFogDensity;
+    }
+
     public void toogleWireframe() {
         if (this.wireframeMode)
             wireframeMode = false;
@@ -487,17 +534,18 @@ public class Planet extends Node {
         this.atmosphereNode = new Node("AtmosphereNode");
         planetNode.attachChild(atmosphereNode);
         
-        Mesh sphere = new Sphere(100, 100, this.atmosphereRadius, true, false);
+        /*
+        Mesh sphere = new Sphere(100, 100, this.atmosphereRadius, false, false);
         Geometry atmosphere = new Geometry("Atmosphere", sphere);
         atmosphere.setMaterial(this.atmosphereMaterial);
         //atmosphere.rotate( 0, FastMath.HALF_PI, 0);
         this.atmosphereNode.attachChild(atmosphere);  
-
-        //atmosphereNode.setQueueBucket(Bucket.Transparent);
-        /*
+        */
+        atmosphereNode.setQueueBucket(Bucket.Transparent);
+        
         int quads = this.quads;
-        int minDepth = 0;
-        int maxDepth = 0;
+        int minDepth = 2;
+        int maxDepth = 4;
         
         SimpleHeightDataSource dataSource = new SimpleHeightDataSource();
         
@@ -626,7 +674,6 @@ public class Planet extends Node {
                 maxDepth,
                 null,
                 0); 
-       */
     }
      
 }

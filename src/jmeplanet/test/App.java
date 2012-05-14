@@ -36,7 +36,7 @@ public class App extends SimpleApplication {
         App app = new App();
         
         app.setSettings(settings);
-        app.showSettings = false;
+        app.showSettings = true;
         app.start();
     }
  
@@ -62,10 +62,17 @@ public class App extends SimpleApplication {
         // Setup camera
         this.getCamera().setFrustumFar(10000000f);
         this.getCamera().setFrustumNear(1.0f);
-        this.getCamera().setLocation(new Vector3f(0f, 0f, 100000f));
+        
+        // In orbit
+        this.getCamera().setLocation(new Vector3f(0f, 0f, 180000f));
+        
+        // On surface
+        //this.getCamera().setLocation(new Vector3f(-6657.5254f, 27401.822f, 57199.777f));
+        //this.getCamera().lookAtDirection(new Vector3f(0.06276598f, 0.94458306f, -0.3222158f), Vector3f.UNIT_Y);
         
         // Add sun
         DirectionalLight sun = new DirectionalLight();
+        sun.setColor(new ColorRGBA(0.45f,0.5f,0.6f,1.0f));
         sun.setDirection(new Vector3f(1f, -1f, 0f));
         rootNode.addLight(sun);
         
@@ -90,14 +97,12 @@ public class App extends SimpleApplication {
         Planet planet = createEarthLikePlanet(63710.0f, 800f, 4);
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);
-        //planet.setLocalTranslation(50000f, 0f, 0f);
         
         // Add moon
         Planet moon = createMoonLikePlanet(20000, 300, 5);
         planetAppState.addPlanet(moon);
         rootNode.attachChild(moon);
         moon.setLocalTranslation(-150000f, 0f, 0f);
-
     }
     
     @Override
@@ -107,7 +112,7 @@ public class App extends SimpleApplication {
         if (planet != null && planet.getPlanetToCamera() != null) {
             //System.out.println(planet.getName() + ": " + planet.getDistanceToCamera());
             this.getFlyByCamera().setMoveSpeed(
-                    FastMath.clamp(planet.getDistanceToCamera(), 1, 100000));
+                    FastMath.clamp(planet.getDistanceToCamera(), 5, 100000));
         }
         
     }
@@ -162,6 +167,8 @@ public class App extends SimpleApplication {
     }; 
     
     private Planet createEarthLikePlanet(float radius, float heightScale, int seed) {
+        boolean logarithmicDepthBuffer = true;
+        
         // Prepare planet material
         Material planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
         
@@ -190,7 +197,7 @@ public class App extends SimpleApplication {
         //planetMaterial.setColor("Color", ColorRGBA.Green);
 
         // Turn on Logarithmic Depth Buffer to avoid z-fighting
-        planetMaterial.setBoolean("LogarithmicDepthBuffer", true);
+        planetMaterial.setBoolean("LogarithmicDepthBuffer", logarithmicDepthBuffer);
         
          // Create height data source
         FractalDataSource dataSource = new FractalDataSource(seed);
@@ -201,21 +208,23 @@ public class App extends SimpleApplication {
         
         // create ocean
         Material oceanMaterial = assetManager.loadMaterial("Materials/Ocean.j3m");
-        //Material oceanMaterial = new Material(this.assetManager, "MatDefs/LogarithmicDepthBufferSimple.j3md");
+        //oceanMaterial = new Material(this.assetManager, "MatDefs/LogarithmicDepthBufferSimple.j3md");
         //oceanMaterial.setColor("Color", ColorRGBA.Blue);
-        oceanMaterial.setBoolean("LogarithmicDepthBuffer", true);
+        oceanMaterial.setBoolean("LogarithmicDepthBuffer", logarithmicDepthBuffer);
         planet.createOcean(oceanMaterial);
         
         // create atmosphere
         Material atmosphereMaterial = new Material(this.assetManager, "MatDefs/PlanetAtmosphere.j3md");
         float atmosphereRadius = radius + (radius * .05f);
-        atmosphereMaterial.setBoolean("LogarithmicDepthBuffer", true);
-        atmosphereMaterial.setFloat("PlanetRadius", radius);
-        atmosphereMaterial.setFloat("AtmosphereRadius", atmosphereRadius);
-
-        //planet.createAtmosphere(atmosphereMaterial, atmosphereRadius);
-
+        atmosphereMaterial.setColor("Ambient", new ColorRGBA(0.5f,0.5f,1f,1f));
+        atmosphereMaterial.setColor("Diffuse", new ColorRGBA(0.5f,0.5f,1f,1f));
+        atmosphereMaterial.setColor("Specular", new ColorRGBA(0.7f,0.7f,1f,1f));
+        atmosphereMaterial.setFloat("Shininess", 3.0f);
+        atmosphereMaterial.setBoolean("LogarithmicDepthBuffer", logarithmicDepthBuffer);
         
+
+        planet.createAtmosphere(atmosphereMaterial, atmosphereRadius);
+
         return planet;
     }
     

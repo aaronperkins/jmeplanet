@@ -5,9 +5,6 @@ uniform mat4 g_WorldViewProjectionMatrix;
 uniform mat4 g_WorldViewMatrix;
 uniform mat3 g_NormalMatrix;
 uniform mat4 g_ViewMatrix;
-#ifdef LOGARITHIMIC_DEPTH_BUFFER
-uniform vec2 g_FrustumNearFar;
-#endif
 
 uniform vec4 m_Ambient;
 uniform vec4 m_Diffuse;
@@ -82,6 +79,10 @@ varying vec3 lightVec;
     }
 #endif
 
+#ifdef LOGARITHIMIC_DEPTH_BUFFER
+varying vec4 positionProjectionSpace;
+#endif
+
 // JME3 lights in world space
 void lightComputeDir(in vec3 worldPos, in vec4 color, in vec4 position, out vec4 lightDir){
     float posLight = step(0.5, color.w);
@@ -135,10 +136,6 @@ vec2 computeLighting(in vec3 wvPos, in vec3 wvNorm, in vec3 wvViewDir, in vec4 w
 
 void main(){
     gl_Position = g_WorldViewProjectionMatrix * inPosition;
-    #ifdef LOGARITHIMIC_DEPTH_BUFFER
-    const float C = 1.0;
-    gl_Position.z = (2*log(C*gl_Position.z + 1) / log(C*g_FrustumNearFar.y + 1) - 1) * gl_Position.w;
-    #endif
 
     texCoord = inTexCoord;
     #ifdef SEPARATE_TEXCOORD
@@ -198,4 +195,8 @@ void main(){
     #ifdef USE_REFLECTION
     computeRef();
     #endif 
+
+    #ifdef LOGARITHIMIC_DEPTH_BUFFER
+        positionProjectionSpace = gl_Position;
+    #endif
 }

@@ -24,6 +24,8 @@ package jmeplanet;
 import com.jme3.app.Application;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
+import com.jme3.post.FilterPostProcessor;
+import com.jme3.post.filters.BloomFilter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,16 +37,33 @@ public class PlanetAppState extends AbstractAppState {
     
     protected Application app;
     protected List<Planet> planets;
+    protected FilterPostProcessor fpp;
+    protected PlanetFogFilter fog;
     
     public PlanetAppState() {
-        this.planets = new ArrayList<Planet>();    
+        this.planets = new ArrayList<Planet>(); 
     }
     
     @Override
     public void initialize(AppStateManager stateManager, Application app) {
         super.initialize(stateManager, app);
         
-        this.app = app;    
+        this.app = app;
+        
+        fpp=new FilterPostProcessor(app.getAssetManager());
+        app.getViewPort().addProcessor(fpp);
+        
+        fog= new PlanetFogFilter();
+        fpp.addFilter(fog);
+
+        BloomFilter bloom=new BloomFilter();
+        bloom.setDownSamplingFactor(2);
+        bloom.setBlurScale(1.37f);
+        bloom.setExposurePower(3.30f);
+        bloom.setExposureCutOff(0.1f);
+        bloom.setBloomIntensity(1.45f);
+        fpp.addFilter(bloom);
+        
     }
             
     @Override
@@ -57,6 +76,8 @@ public class PlanetAppState extends AbstractAppState {
         for (Planet planet: this.planets ) {
             planet.setCameraPosition(this.app.getCamera().getLocation());
         }
+
+        checkFog();
     }
     
     @Override
@@ -80,6 +101,32 @@ public class PlanetAppState extends AbstractAppState {
             }
         }
         return cPlanet;
+    }
+    
+    protected void checkFog() {
+        Planet planet = getClosestPlanet();
+        if (planet.getAtmosphereNode() != null) {
+            if (planet.getDistanceToCamera() < planet.getAtmosphereRadius() - planet.getRadius()) {
+                //if (!fog.isEnabled()) {
+                    fog.setFogColor(planet.getAtmosphereFogColor());
+                    fog.setFogDistance(planet.getAtmosphereFogDistance());
+                    fog.setFogDensity(planet.getAtmosphereFogDensity());
+                    
+                    if (planet.getDistanceToCamera() <= 2f) {
+                        fog.setFogColor(planet.getUnderwaterFogColor());
+                        fog.setFogDistance(planet.getUnderwaterFogDistance());
+                        fog.setFogDensity(planet.getUnderwaterFogDensity());                        
+                    }
+                    
+                    fog.setEnabled(true);                    
+                //}
+            }
+            else {
+                //if (fog.isEnabled()) {
+                    fog.setEnabled(false);
+                //}
+            }
+        }
     }
   
 }

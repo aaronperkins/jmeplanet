@@ -20,6 +20,11 @@ varying vec3 vViewDir;
 varying vec4 vLightDir;
 varying vec3 lightVec;
 
+#ifdef LOGARITHIMIC_DEPTH_BUFFER
+uniform vec2 g_FrustumNearFar;
+varying vec4 positionProjectionSpace;
+#endif
+
 float getWeight(float value, float vMin, float vMax) {
     float weight;
     float range = vMax - vMin;
@@ -109,4 +114,10 @@ void main() {
     vec2 light = computeLighting(vNormal, viewDir, lightDir.xyz);
 
     gl_FragColor.rgb =  AmbientSum * color.rgb + DiffuseSum.rgb * color.rgb * vec3(light.x);
+
+    #ifdef LOGARITHIMIC_DEPTH_BUFFER
+        const float C = 1.0;
+        const float offset = 1.0;
+        gl_FragDepth = (log(C * positionProjectionSpace.z + offset) / log(C * g_FrustumNearFar.y + offset));
+    #endif
 }
