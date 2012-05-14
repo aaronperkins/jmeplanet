@@ -1,4 +1,4 @@
-Material Ocean : MatDefs/LogarithmicDepthBufferLighting.j3md {
+Material Ocean : MatDefs/Planet/LogarithmicDepthBufferLighting.j3md {
      MaterialParameters {
         UseMaterialColors : true
         Specular : 0.0 0.6 0.8 1.0

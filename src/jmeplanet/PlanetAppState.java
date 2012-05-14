@@ -37,8 +37,10 @@ public class PlanetAppState extends AbstractAppState {
     
     protected Application app;
     protected List<Planet> planets;
+    protected Planet nearestPlanet;
     protected FilterPostProcessor fpp;
     protected PlanetFogFilter fog;
+    protected BloomFilter bloom;
     
     public PlanetAppState() {
         this.planets = new ArrayList<Planet>(); 
@@ -56,14 +58,13 @@ public class PlanetAppState extends AbstractAppState {
         fog= new PlanetFogFilter();
         fpp.addFilter(fog);
 
-        BloomFilter bloom=new BloomFilter();
+        bloom=new BloomFilter();
         bloom.setDownSamplingFactor(2);
         bloom.setBlurScale(1.37f);
         bloom.setExposurePower(3.30f);
         bloom.setExposureCutOff(0.1f);
         bloom.setBloomIntensity(1.45f);
-        fpp.addFilter(bloom);
-        
+        fpp.addFilter(bloom);  
     }
             
     @Override
@@ -73,11 +74,13 @@ public class PlanetAppState extends AbstractAppState {
     
     @Override
     public void update(float tpf) {
+        this.nearestPlanet = findNearestPlanet();
+        
         for (Planet planet: this.planets ) {
             planet.setCameraPosition(this.app.getCamera().getLocation());
         }
-
-        checkFog();
+        
+        updateFog();
     }
     
     @Override
@@ -93,7 +96,11 @@ public class PlanetAppState extends AbstractAppState {
         return this.planets;
     }
     
-    public Planet getClosestPlanet() {
+    public Planet getNearestPlanet() {
+        return this.nearestPlanet;
+    }
+    
+    protected Planet findNearestPlanet() {
         Planet cPlanet = null;
         for (Planet planet: this.planets ) {
             if (cPlanet == null || cPlanet.getDistanceToCamera() > planet.getDistanceToCamera()) {
@@ -103,28 +110,29 @@ public class PlanetAppState extends AbstractAppState {
         return cPlanet;
     }
     
-    protected void checkFog() {
-        Planet planet = getClosestPlanet();
+    protected void updateFog() {
+        if (this.nearestPlanet == null)
+            return;
+        Planet planet = this.nearestPlanet;
         if (planet.getAtmosphereNode() != null) {
             if (planet.getDistanceToCamera() < planet.getAtmosphereRadius() - planet.getRadius()) {
-                //if (!fog.isEnabled()) {
-                    fog.setFogColor(planet.getAtmosphereFogColor());
-                    fog.setFogDistance(planet.getAtmosphereFogDistance());
-                    fog.setFogDensity(planet.getAtmosphereFogDensity());
+                // turn on atomosphere fogging
+                fog.setFogColor(planet.getAtmosphereFogColor());
+                fog.setFogDistance(planet.getAtmosphereFogDistance());
+                fog.setFogDensity(planet.getAtmosphereFogDensity());
+
+                // turn on underwater fogging if needed
+                if (planet.getOceanNode() != null && planet.getDistanceToCamera() <= 2f) {
+                    fog.setFogColor(planet.getUnderwaterFogColor());
+                    fog.setFogDistance(planet.getUnderwaterFogDistance());
+                    fog.setFogDensity(planet.getUnderwaterFogDensity());                        
+                }
                     
-                    if (planet.getDistanceToCamera() <= 2f) {
-                        fog.setFogColor(planet.getUnderwaterFogColor());
-                        fog.setFogDistance(planet.getUnderwaterFogDistance());
-                        fog.setFogDensity(planet.getUnderwaterFogDensity());                        
-                    }
-                    
-                    fog.setEnabled(true);                    
-                //}
+                fog.setEnabled(true);                    
             }
             else {
-                //if (fog.isEnabled()) {
-                    fog.setEnabled(false);
-                //}
+                // turn off fogging
+                fog.setEnabled(false);
             }
         }
     }

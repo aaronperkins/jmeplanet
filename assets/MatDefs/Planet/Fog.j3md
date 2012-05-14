@@ -12,7 +12,7 @@ MaterialDef PlanetFog {
 
     Technique {
         VertexShader GLSL100:   Common/MatDefs/Post/Post.vert
-        FragmentShader GLSL100: MatDefs/PlanetFog.frag
+        FragmentShader GLSL100: MatDefs/Planet/Fog.frag
 
         WorldParameters {
             WorldViewProjectionMatrix

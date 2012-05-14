@@ -17,8 +17,8 @@ MaterialDef PlanetAtmosphere {
 
 	Technique {
                 LightMode MultiPass
-		VertexShader GLSL100:   MatDefs/PlanetAtmosphere.vert
-		FragmentShader GLSL100: MatDefs/PlanetAtmosphere.frag
+		VertexShader GLSL100:   MatDefs/Planet/Atmosphere.vert
+		FragmentShader GLSL100: MatDefs/Planet/Atmosphere.frag
 
 		WorldParameters {
 			WorldViewProjectionMatrix

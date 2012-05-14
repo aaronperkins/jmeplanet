@@ -108,8 +108,8 @@ MaterialDef LogarithmicDepthBufferLighting {
 
         LightMode MultiPass
 
-        VertexShader GLSL100:   MatDefs/LogarithmicDepthBufferLighting.vert
-        FragmentShader GLSL100: MatDefs/LogarithmicDepthBufferLighting.frag
+        VertexShader GLSL100:   MatDefs/Planet/LogarithmicDepthBufferLighting.vert
+        FragmentShader GLSL100: MatDefs/Planet/LogarithmicDepthBufferLighting.frag
 
         WorldParameters {
             WorldViewProjectionMatrix

@@ -27,8 +27,8 @@ MaterialDef PlanetTerrain {
 
 	Technique {
                 LightMode MultiPass
-		VertexShader GLSL100:   MatDefs/PlanetTerrain.vert
-		FragmentShader GLSL100: MatDefs/PlanetTerrain.frag
+		VertexShader GLSL100:   MatDefs/Planet/Terrain.vert
+		FragmentShader GLSL100: MatDefs/Planet/Terrain.frag
 
 		WorldParameters {
 			WorldViewProjectionMatrix

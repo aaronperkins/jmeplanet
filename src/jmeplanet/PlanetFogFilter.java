@@ -83,7 +83,7 @@ public class PlanetFogFilter extends Filter {
 
     @Override
     protected void initFilter(AssetManager manager, RenderManager renderManager, ViewPort vp, int w, int h) {
-        material = new Material(manager, "MatDefs/PlanetFog.j3md");
+        material = new Material(manager, "MatDefs/Planet/Fog.j3md");
         material.setColor("FogColor", fogColor);
         material.setFloat("FogDensity", fogDensity);
         material.setFloat("FogDistance", fogDistance);

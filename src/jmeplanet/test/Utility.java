@@ -38,6 +38,10 @@ import com.jme3.scene.shape.Sphere;
 import com.jme3.texture.Image;
 import com.jme3.texture.TextureCubeMap;
 
+/**
+ * Utility
+ * 
+ */
 public class Utility {
     
     public static Node createGridAxis(AssetManager assetManager, int lines, int spacing) {
@@ -74,7 +78,7 @@ public class Utility {
         return grid;
     }
     
-     public static Spatial createSkyBox(AssetManager assetManager, String textureName) {
+    public static Spatial createSkyBox(AssetManager assetManager, String textureName) {
         Mesh sphere = new Sphere(10, 10, 100f);
         sphere.setStatic();
         Geometry sky = new Geometry("SkyBox", sphere);

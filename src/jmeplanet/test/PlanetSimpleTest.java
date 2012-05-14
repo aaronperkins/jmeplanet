@@ -1,3 +1,24 @@
+/*
+Copyright (c) 2012 Aaron Perkins
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 package jmeplanet.test;
 
 import com.jme3.app.SimpleApplication;
@@ -24,8 +45,12 @@ import com.jme3.scene.shape.Sphere;
 import jmeplanet.Planet;
 import jmeplanet.FractalDataSource;
 import jmeplanet.PlanetAppState;
- 
-public class App extends SimpleApplication {
+
+/**
+ * PlanetSimpleTest
+ * 
+ */
+public class PlanetSimpleTest extends SimpleApplication {
     
     private PlanetAppState planetAppState;
     private Geometry mark;
@@ -33,7 +58,7 @@ public class App extends SimpleApplication {
     public static void main(String[] args){
         AppSettings settings = new AppSettings(true);
         settings.setResolution(1024,768);
-        App app = new App();
+        PlanetSimpleTest app = new PlanetSimpleTest();
         
         app.setSettings(settings);
         app.showSettings = true;
@@ -84,7 +109,7 @@ public class App extends SimpleApplication {
         // Create collision test mark
         Sphere sphere = new Sphere(30, 30, 5f);
         mark = new Geometry("mark", sphere);
-        Material mark_mat = new Material(assetManager, "MatDefs/LogarithmicDepthBufferSimple.j3md");
+        Material mark_mat = new Material(assetManager, "MatDefs/Planet/LogarithmicDepthBufferSimple.j3md");
         mark_mat.setBoolean("LogarithmicDepthBuffer", true);
         mark_mat.setColor("Color", ColorRGBA.Red);
         mark.setMaterial(mark_mat);
@@ -108,7 +133,7 @@ public class App extends SimpleApplication {
     @Override
     public void simpleUpdate(float tpf) {
         // slow camera down as we approach a planet
-        Planet planet = planetAppState.getClosestPlanet();
+        Planet planet = planetAppState.getNearestPlanet();
         if (planet != null && planet.getPlanetToCamera() != null) {
             //System.out.println(planet.getName() + ": " + planet.getDistanceToCamera());
             this.getFlyByCamera().setMoveSpeed(
@@ -139,7 +164,7 @@ public class App extends SimpleApplication {
                 Ray ray = new Ray(cam.getLocation(), cam.getDirection());
                 
                 // Test collision with closest planet's terrain only
-                planetAppState.getClosestPlanet().getTerrainNode().collideWith(ray, results);
+                planetAppState.getNearestPlanet().getTerrainNode().collideWith(ray, results);
 
                 System.out.println("----- Collisions? " + results.size() + "-----");
                 for (int i = 0; i < results.size(); i++) {
@@ -170,7 +195,7 @@ public class App extends SimpleApplication {
         boolean logarithmicDepthBuffer = true;
         
         // Prepare planet material
-        Material planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
+        Material planetMaterial = new Material(this.assetManager, "MatDefs/Planet/Terrain.j3md");
         
         // shore texture
         Texture dirt = this.assetManager.loadTexture("Textures/dirt.jpg");
@@ -193,7 +218,7 @@ public class App extends SimpleApplication {
         planetMaterial.setTexture("Region4ColorMap", snow);
         planetMaterial.setVector3("Region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
         
-        //planetMaterial = new Material(this.assetManager, "MatDefs/LogarithmicDepthBufferSimple.j3md");
+        //planetMaterial = new Material(this.assetManager, "MatDefs/Planet/LogarithmicDepthBufferSimple.j3md");
         //planetMaterial.setColor("Color", ColorRGBA.Green);
 
         // Turn on Logarithmic Depth Buffer to avoid z-fighting
@@ -208,13 +233,13 @@ public class App extends SimpleApplication {
         
         // create ocean
         Material oceanMaterial = assetManager.loadMaterial("Materials/Ocean.j3m");
-        //oceanMaterial = new Material(this.assetManager, "MatDefs/LogarithmicDepthBufferSimple.j3md");
+        //oceanMaterial = new Material(this.assetManager, "MatDefs/Planet/LogarithmicDepthBufferSimple.j3md");
         //oceanMaterial.setColor("Color", ColorRGBA.Blue);
         oceanMaterial.setBoolean("LogarithmicDepthBuffer", logarithmicDepthBuffer);
         planet.createOcean(oceanMaterial);
         
         // create atmosphere
-        Material atmosphereMaterial = new Material(this.assetManager, "MatDefs/PlanetAtmosphere.j3md");
+        Material atmosphereMaterial = new Material(this.assetManager, "MatDefs/Planet/Atmosphere.j3md");
         float atmosphereRadius = radius + (radius * .05f);
         atmosphereMaterial.setColor("Ambient", new ColorRGBA(0.5f,0.5f,1f,1f));
         atmosphereMaterial.setColor("Diffuse", new ColorRGBA(0.5f,0.5f,1f,1f));
@@ -230,7 +255,7 @@ public class App extends SimpleApplication {
     
     private Planet createMoonLikePlanet(float radius, float heightScale, int seed) {
         // Prepare planet material
-        Material planetMaterial = new Material(this.assetManager, "MatDefs/PlanetTerrain.j3md");
+        Material planetMaterial = new Material(this.assetManager, "MatDefs/Planet/Terrain.j3md");
         
         // region1 texture
         Texture region1 = this.assetManager.loadTexture("Textures/moon.jpg");
