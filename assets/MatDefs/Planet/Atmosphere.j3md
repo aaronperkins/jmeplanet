@@ -39,7 +39,4 @@ MaterialDef PlanetAtmosphere {
                 }
 	}
 
-	Technique FixedFunc {
-        }
-
 }

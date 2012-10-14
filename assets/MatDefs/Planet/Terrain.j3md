@@ -43,8 +43,4 @@ MaterialDef PlanetTerrain {
                     LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer
                 }
 	}
-
-	Technique FixedFunc {
-        }
-
 }

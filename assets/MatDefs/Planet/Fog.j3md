@@ -20,7 +20,4 @@ MaterialDef PlanetFog {
         }
     }
 
-    Technique FixedFunc {
-    }
-
 }
