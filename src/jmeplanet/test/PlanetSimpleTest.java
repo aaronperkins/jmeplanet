@@ -27,6 +27,7 @@ import com.jme3.collision.CollisionResults;
 import com.jme3.system.AppSettings;
 import com.jme3.material.Material;
 import com.jme3.light.DirectionalLight;
+import com.jme3.light.PointLight;
 import com.jme3.math.Vector3f;
 import com.jme3.input.KeyInput;
 import com.jme3.input.MouseInput;
@@ -39,6 +40,7 @@ import com.jme3.math.Ray;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Sphere;
+import jmeplanet.FractalDataSource;
 
 import jmeplanet.Planet;
 import jmeplanet.PlanetAppState;
@@ -93,9 +95,11 @@ public class PlanetSimpleTest extends SimpleApplication {
         //this.getCamera().lookAtDirection(new Vector3f(0.06276598f, 0.94458306f, -0.3222158f), Vector3f.UNIT_Y);
         
         // Add sun
-        DirectionalLight sun = new DirectionalLight();
+        PointLight sun = new PointLight();
+        //DirectionalLight sun = new DirectionalLight();
         sun.setColor(new ColorRGBA(0.45f,0.5f,0.6f,1.0f));
-        sun.setDirection(new Vector3f(1f, -1f, 0f));
+        //sun.setDirection(new Vector3f(1f, -1f, 0f));
+        sun.setPosition(new Vector3f(-500000f,0,180000f));
         rootNode.addLight(sun);
         
         // Add sky
@@ -116,12 +120,16 @@ public class PlanetSimpleTest extends SimpleApplication {
         stateManager.attach(planetAppState);
         
         // Add planet
-        Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, 800f, 4);
+        FractalDataSource planetDataSource = new FractalDataSource(4);
+        planetDataSource.setHeightScale(800f);
+        Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, planetDataSource);
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);
         
         // Add moon
-        Planet moon = Utility.createMoonLikePlanet(getAssetManager(), 20000, 300, 5);
+        FractalDataSource moonDataSource = new FractalDataSource(5);
+        moonDataSource.setHeightScale(300f);
+        Planet moon = Utility.createMoonLikePlanet(getAssetManager(), 20000, moonDataSource);
         planetAppState.addPlanet(moon);
         rootNode.attachChild(moon);
         moon.setLocalTranslation(-150000f, 0f, 0f);
@@ -132,15 +140,13 @@ public class PlanetSimpleTest extends SimpleApplication {
         // slow camera down as we approach a planet
         Planet planet = planetAppState.getNearestPlanet();
         if (planet != null && planet.getPlanetToCamera() != null) {
-            //System.out.println(planet.getName() + ": " + planet.getDistanceToCamera());
             this.getFlyByCamera().setMoveSpeed(
-                    FastMath.clamp(planet.getDistanceToCamera(), 5, 100000));
+                    FastMath.clamp(planet.getDistanceToCamera(), 100, 100000));
         }     
     }
     
     private ActionListener actionListener = new ActionListener(){
-        public void onAction(String name, boolean pressed, float tpf){
-                        
+        public void onAction(String name, boolean pressed, float tpf){     
             if (name.equals("TOGGLE_CURSOR") && !pressed) {
                 if (inputManager.isCursorVisible()) {
                     inputManager.setCursorVisible(false);
@@ -148,13 +154,11 @@ public class PlanetSimpleTest extends SimpleApplication {
                     inputManager.setCursorVisible(true);
                 }
             }
-
             if (name.equals("TOGGLE_WIREFRAME") && !pressed) {
                 for (Planet planet: planetAppState.getPlanets()) {
                     planet.toogleWireframe();
                 }
             }
-
             if (name.equals("COLLISION_TEST") && !pressed) {
                 CollisionResults results = new CollisionResults();
                 Ray ray = new Ray(cam.getLocation(), cam.getDirection());
@@ -183,7 +187,6 @@ public class PlanetSimpleTest extends SimpleApplication {
                   rootNode.detachChild(mark);
                 }
             }  
-             
         }
     }; 
      

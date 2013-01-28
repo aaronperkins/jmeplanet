@@ -70,7 +70,7 @@ public class Planet extends Node {
     protected float atmosphereFogDensity = 10f; // multipler range 0.1 - 100
     
     protected ColorRGBA underwaterFogColor = new ColorRGBA(0.2f, 0.3f, 0.9f, 1.0f);
-    protected float underwaterFogDistance = 0.1f; // percentage range 0 to 1
+    protected float underwaterFogDistance = 0.30f; // percentage range 0 to 1
     protected float underwaterFogDensity = 10f; // multipler range 0.1 - 100
     
     /**
@@ -249,16 +249,29 @@ public class Planet extends Node {
             wireframeMode = false;
         else
             wireframeMode = true;
-        
-        if (oceanNode != null)
-            this.oceanMaterial.getAdditionalRenderState().setWireframe(wireframeMode);
-        
+        setWireframe(wireframeMode);
+    }
+    
+    public void setWireframe(boolean value) {
         for (int i = 0; i < 6; i++) {
             if (terrainSide[i] != null)
-                terrainSide[i].setWireframe(wireframeMode);
+                terrainSide[i].setWireframe(value);
             if (oceanSide[i] != null)
-                oceanSide[i].setWireframe(wireframeMode);
-        }      
+                oceanSide[i].setVisiblity(!value);
+            if (atmosphereSide[i] != null)
+                atmosphereSide[i].setVisiblity(!value);
+        }   
+    }
+    
+    public void setVisiblity(boolean value) {
+        for (int i = 0; i < 6; i++) {
+            if (terrainSide[i] != null)
+                terrainSide[i].setVisiblity(value);
+            if (oceanSide[i] != null)
+                oceanSide[i].setVisiblity(value);
+            if (atmosphereSide[i] != null)
+                atmosphereSide[i].setVisiblity(value);
+        }   
     }
     
     private void prepareTerrain() {

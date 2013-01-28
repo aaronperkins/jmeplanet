@@ -38,7 +38,7 @@ import com.jme3.scene.shape.Sphere;
 import com.jme3.texture.Image;
 import com.jme3.texture.Texture;
 import com.jme3.texture.TextureCubeMap;
-import jmeplanet.FractalDataSource;
+import jmeplanet.HeightDataSource;
 import jmeplanet.Planet;
 
 /**
@@ -102,8 +102,9 @@ public class Utility {
         return sky;
     }
     
-    public static Planet createEarthLikePlanet(AssetManager assetManager, float radius, float heightScale, int seed) {
-        boolean logarithmicDepthBuffer = true;
+    public static Planet createEarthLikePlanet(AssetManager assetManager, float radius, HeightDataSource dataSource) {
+        
+        float heightScale = dataSource.getHeightScale();
         
         // Prepare planet material
         Material planetMaterial = new Material(assetManager, "MatDefs/Planet/Terrain.j3md");
@@ -133,12 +134,8 @@ public class Utility {
         //planetMaterial.setColor("Color", ColorRGBA.Green);
 
         // Turn on Logarithmic Depth Buffer to avoid z-fighting
-        planetMaterial.setBoolean("LogarithmicDepthBuffer", logarithmicDepthBuffer);
-        
-         // Create height data source
-        FractalDataSource dataSource = new FractalDataSource(seed);
-        dataSource.setHeightScale(heightScale);
-        
+        planetMaterial.setBoolean("LogarithmicDepthBuffer", true);
+             
         // create planet
         Planet planet = new Planet("Planet", radius, planetMaterial, dataSource);
         
@@ -146,7 +143,7 @@ public class Utility {
         Material oceanMaterial = assetManager.loadMaterial("Materials/Ocean.j3m");
         //oceanMaterial = new Material(this.assetManager, "MatDefs/Planet/LogarithmicDepthBufferSimple.j3md");
         //oceanMaterial.setColor("Color", ColorRGBA.Blue);
-        oceanMaterial.setBoolean("LogarithmicDepthBuffer", logarithmicDepthBuffer);
+        oceanMaterial.setBoolean("LogarithmicDepthBuffer", true);
         planet.createOcean(oceanMaterial);
         
         // create atmosphere
@@ -156,15 +153,17 @@ public class Utility {
         atmosphereMaterial.setColor("Diffuse", new ColorRGBA(0.5f,0.5f,1f,1f));
         atmosphereMaterial.setColor("Specular", new ColorRGBA(0.7f,0.7f,1f,1f));
         atmosphereMaterial.setFloat("Shininess", 3.0f);
-        atmosphereMaterial.setBoolean("LogarithmicDepthBuffer", logarithmicDepthBuffer);
+        atmosphereMaterial.setBoolean("LogarithmicDepthBuffer", true);
         
-
         planet.createAtmosphere(atmosphereMaterial, atmosphereRadius);
 
         return planet;
     }
     
-    public static Planet createMoonLikePlanet(AssetManager assetManager, float radius, float heightScale, int seed) {
+    public static Planet createMoonLikePlanet(AssetManager assetManager, float radius, HeightDataSource dataSource) {
+        
+        float heightScale = dataSource.getHeightScale();
+        
         // Prepare planet material
         Material planetMaterial = new Material(assetManager, "MatDefs/Planet/Terrain.j3md");
         
@@ -191,11 +190,7 @@ public class Utility {
 
         // Turn on Logarithmic Depth Buffer to avoid z-fighting
         planetMaterial.setBoolean("LogarithmicDepthBuffer", true);
-        
-         // Create height data source
-        FractalDataSource dataSource = new FractalDataSource(seed);
-        dataSource.setHeightScale(heightScale);
-        
+             
         // create planet
         Planet planet = new Planet("Moon", radius, planetMaterial, dataSource);
         

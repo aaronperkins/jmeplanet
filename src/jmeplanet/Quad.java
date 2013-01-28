@@ -27,6 +27,7 @@ import com.jme3.scene.Node;
 import com.jme3.scene.Geometry;
 import com.jme3.material.Material;
 import com.jme3.bounding.BoundingBox;
+import com.jme3.material.RenderState.FaceCullMode;
 import com.jme3.shader.VarType;
 import com.jme3.terrain.heightmap.AbstractHeightMap;
 
@@ -222,6 +223,18 @@ public class Quad {
         for (int i = 0; i < 4; i++) {
             if (this.subQuad[i] != null) {
                 this.subQuad[i].setWireframe(value);
+            }
+        } 
+    }
+    
+    public void setVisiblity(boolean value) {
+        if (value)
+            this.material.getAdditionalRenderState().setFaceCullMode(FaceCullMode.Back);
+        else
+            this.material.getAdditionalRenderState().setFaceCullMode(FaceCullMode.FrontAndBack);
+        for (int i = 0; i < 4; i++) {
+            if (this.subQuad[i] != null) {
+                this.subQuad[i].setVisiblity(value);
             }
         } 
     }
