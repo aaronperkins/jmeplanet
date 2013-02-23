@@ -27,6 +27,7 @@ import com.jme3.math.FastMath;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.queue.RenderQueue.Bucket;
 import com.jme3.scene.Node;
+import com.jme3.shader.VarType;
 
 /**
  * Quad
@@ -64,14 +65,18 @@ public class Planet extends Node {
     protected boolean oceanFloorCulling;
     protected Vector3f planetToCamera;
     protected float distanceToCamera;
+    protected boolean currentlyInAtmosphere;
+    protected boolean previouslyInAtmosphere;
+    protected boolean currentlyInOcean;
+    protected boolean previouslyInOcean;
     
     protected ColorRGBA atmosphereFogColor = new ColorRGBA(0.9f, 0.9f, 0.9f, 1.0f);
-    protected float atmosphereFogDistance = 0.5f; // percentage range 0 to 1
-    protected float atmosphereFogDensity = 10f; // multipler range 0.1 - 100
+    protected float atmosphereFogDistance = 100.0f; 
+    protected float atmosphereFogDensity = 1f; 
     
     protected ColorRGBA underwaterFogColor = new ColorRGBA(0.2f, 0.3f, 0.9f, 1.0f);
-    protected float underwaterFogDistance = 0.30f; // percentage range 0 to 1
-    protected float underwaterFogDensity = 10f; // multipler range 0.1 - 100
+    protected float underwaterFogDistance = 50f; 
+    protected float underwaterFogDensity = 3.0f; 
     
     /**
     * <code>Planet</code>
@@ -137,7 +142,33 @@ public class Planet extends Node {
         // get vector between planet and camera
         this.planetToCamera = position.subtract(this.getLocalTranslation());
         // get distance to surface
-        this.distanceToCamera= this.planetToCamera.length() - this.baseRadius;
+        this.distanceToCamera = this.planetToCamera.length() - this.baseRadius;
+        
+        // are we in the atmosphere?
+        if (this.atmosphereNode != null) {
+            if (this.distanceToCamera < this.atmosphereRadius - this.baseRadius) {  
+                this.previouslyInAtmosphere = this.currentlyInAtmosphere;
+                this.currentlyInAtmosphere = true;
+            }
+            else
+            {
+                this.previouslyInAtmosphere = this.currentlyInAtmosphere;
+                this.currentlyInAtmosphere = false;               
+            }
+        }
+        
+        // are we in the water?
+        if (this.oceanNode != null) {
+            if (this.distanceToCamera <= 1f) {  
+                this.previouslyInOcean = this.currentlyInOcean;
+                this.currentlyInOcean = true;
+            }
+            else
+            {
+                this.previouslyInOcean = this.currentlyInOcean;
+                this.currentlyInOcean = false;               
+            }
+        }
         
         // Update camera positions for all quads
         int currentTerrainMaxDepth = 0;
@@ -155,6 +186,7 @@ public class Planet extends Node {
             }
         }
         
+        // toggle skirting on the terrain if needed
         boolean skirting;
         // Are we at minDepth?
         if (currentTerrainMaxDepth == this.minDepth ) {
@@ -168,7 +200,7 @@ public class Planet extends Node {
         for (int i = 0; i < 6; i++) {
             if (terrainSide[i] != null)
                 terrainSide[i].setSkirting(skirting);
-        }   
+        }
     }
     
     public Node getPlanetNode() {
@@ -205,6 +237,22 @@ public class Planet extends Node {
     
     public float getDistanceToCamera() {
         return this.distanceToCamera;
+    }
+    
+    public boolean getIsInAtmosphere() {
+        return this.currentlyInAtmosphere;
+    }
+    
+    public boolean getIsTransitioningAtmosphere() {
+        return this.currentlyInAtmosphere != this.previouslyInAtmosphere;
+    }
+    
+    public boolean getIsInOcean() {
+        return this.currentlyInOcean;
+    }
+    
+    public boolean getIsTransitioningOcean() {
+        return this.currentlyInOcean != this.previouslyInOcean;
     }
     
     public ColorRGBA getAtmosphereFogColor() {
@@ -277,6 +325,7 @@ public class Planet extends Node {
     private void prepareTerrain() {
 
         this.terrainNode = new Node("TerrainNode");
+        this.terrainNode.setShadowMode(shadowMode.Receive);
         this.planetNode.attachChild(terrainNode);
         
         Vector3f rightMin = new Vector3f(1.0f, 1.0f, 1.0f);
@@ -408,6 +457,7 @@ public class Planet extends Node {
  
     private void prepareOcean() {        
         this.oceanNode = new Node("OceanNode");
+        this.oceanNode.setShadowMode(shadowMode.Off);
         planetNode.attachChild(oceanNode);
         
         int quads = this.quads;
@@ -545,6 +595,7 @@ public class Planet extends Node {
     
     private void prepareAtmosphere() {        
         this.atmosphereNode = new Node("AtmosphereNode");
+        this.atmosphereNode.setShadowMode(shadowMode.Off);
         planetNode.attachChild(atmosphereNode);
         
         /*

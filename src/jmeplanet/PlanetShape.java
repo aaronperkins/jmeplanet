@@ -194,7 +194,7 @@ public class PlanetShape extends ConcaveShape {
 
     @Override
     public BroadphaseNativeType getShapeType() {
-       return BroadphaseNativeType.TRIANGLE_MESH_SHAPE_PROXYTYPE;
+       return BroadphaseNativeType.FAST_CONCAVE_MESH_PROXYTYPE;
     }
 
     @Override

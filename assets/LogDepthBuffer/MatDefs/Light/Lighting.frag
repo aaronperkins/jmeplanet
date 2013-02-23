@@ -1,7 +1,13 @@
+#import "LogDepthBuffer/ShaderLib/LogDepthBuffer.glsllib"
 #import "Common/ShaderLib/Parallax.glsllib"
 #import "Common/ShaderLib/Optics.glsllib"
 #define ATTENUATION
 //#define HQ_ATTENUATION
+
+#ifdef LOGARITHIMIC_DEPTH_BUFFER
+  uniform vec2 g_FrustumNearFar;
+  varying vec4 positionProjectionSpace;
+#endif
 
 varying vec2 texCoord;
 #ifdef SEPARATE_TEXCOORD
@@ -55,6 +61,8 @@ varying vec3 SpecularSum;
   uniform sampler2D m_ColorRamp;
 #endif
 
+uniform float m_AlphaDiscardThreshold;
+
 #ifndef VERTEX_LIGHTING
 uniform float m_Shininess;
 
@@ -68,11 +76,6 @@ uniform vec4 g_LightPosition;
     varying vec4 refVec;
 
     uniform ENVMAP m_EnvMap;
-#endif
-
-#ifdef LOGARITHIMIC_DEPTH_BUFFER
-uniform vec2 g_FrustumNearFar;
-varying vec4 positionProjectionSpace;
 #endif
 
 float tangDot(in vec3 v1, in vec3 v2){
@@ -174,7 +177,10 @@ void main(){
     float alpha = DiffuseSum.a * diffuseColor.a;
     #ifdef ALPHAMAP
        alpha = alpha * texture2D(m_AlphaMap, newTexCoord).r;
-    #endif  
+    #endif
+    if(alpha < m_AlphaDiscardThreshold){
+        discard;
+    }
 
     #ifndef VERTEX_LIGHTING
         float spotFallOff = 1.0;
@@ -281,8 +287,6 @@ void main(){
     gl_FragColor.a = alpha;
 
     #ifdef LOGARITHIMIC_DEPTH_BUFFER
-        const float C = 1.0;
-        const float offset = 1.0;
-        gl_FragDepth = (log(C * positionProjectionSpace.z + offset) / log(C * g_FrustumNearFar.y + offset));
+       gl_FragDepth = computeLogDepthBuffer(positionProjectionSpace.z, g_FrustumNearFar.x, g_FrustumNearFar.y);
     #endif
 }

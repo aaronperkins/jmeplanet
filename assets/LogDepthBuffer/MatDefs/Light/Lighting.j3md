@@ -1,4 +1,4 @@
-MaterialDef LogarithmicDepthBufferLighting {
+MaterialDef Phong Lighting {
 
     MaterialParameters {
 
@@ -16,7 +16,7 @@ MaterialDef LogarithmicDepthBufferLighting {
         Boolean UseAlpha
 
         // Apha threshold for fragment discarding
-        Float AlphaDiscardThreshold
+        Float AlphaDiscardThreshold (AlphaTestFallOff)
 
         // Normal map is in BC5/ATI2n/LATC/3Dc compression format
         Boolean LATC
@@ -100,6 +100,34 @@ MaterialDef LogarithmicDepthBufferLighting {
         // the env map is a spheremap and not a cube map
         Boolean EnvMapAsSphereMap
 
+        //shadows
+         Int FilterMode
+        Boolean HardwareShadows
+
+        Texture2D ShadowMap0
+        Texture2D ShadowMap1
+        Texture2D ShadowMap2
+        Texture2D ShadowMap3
+        //pointLights
+        Texture2D ShadowMap4
+        Texture2D ShadowMap5
+        
+        Float ShadowIntensity
+        Vector4 Splits
+        Vector2 FadeInfo
+
+        Matrix4 LightViewProjectionMatrix0
+        Matrix4 LightViewProjectionMatrix1
+        Matrix4 LightViewProjectionMatrix2
+        Matrix4 LightViewProjectionMatrix3
+        //pointLight
+        Matrix4 LightViewProjectionMatrix4
+        Matrix4 LightViewProjectionMatrix5   
+        Vector3 LightPos
+
+        Float PCFEdge
+        Float ShadowMapSize
+
         // Use to turn on the Logarithmic Depth Buffer
         Boolean LogarithmicDepthBuffer
     }
@@ -108,8 +136,8 @@ MaterialDef LogarithmicDepthBufferLighting {
 
         LightMode MultiPass
 
-        VertexShader GLSL100:   MatDefs/Planet/LogarithmicDepthBufferLighting.vert
-        FragmentShader GLSL100: MatDefs/Planet/LogarithmicDepthBufferLighting.frag
+        VertexShader GLSL100:   LogDepthBuffer/MatDefs/Light/Lighting.vert
+        FragmentShader GLSL100: LogDepthBuffer/MatDefs/Light/Lighting.frag
 
         WorldParameters {
             WorldViewProjectionMatrix
@@ -145,9 +173,9 @@ MaterialDef LogarithmicDepthBufferLighting {
             SEPARATE_TEXCOORD : SeparateTexCoord
 
             USE_REFLECTION : EnvMap
-            SPHERE_MAP : SphereMap
+            SPHERE_MAP : SphereMap    
 
-            LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer
+            LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer      
         }
     }
 
@@ -159,20 +187,55 @@ MaterialDef LogarithmicDepthBufferLighting {
         WorldParameters {
             WorldViewProjectionMatrix
             WorldViewMatrix
+            FrustumNearFar
         }
 
         Defines {
-            DIFFUSEMAP_ALPHA : DiffuseMap
+            COLOR_MAP : ColorMap
+            DISCARD_ALPHA : AlphaDiscardThreshold
+
+            //LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer      
         }
 
-        RenderState {
+        ForcedRenderState {
             FaceCull Off
             DepthTest On
             DepthWrite On
-            PolyOffset 5 0
+            PolyOffset 5 3
             ColorWrite Off
         }
 
+    }
+
+    Technique PostShadow{
+        VertexShader GLSL100:   Common/MatDefs/Shadow/PostShadow.vert
+        FragmentShader GLSL100: Common/MatDefs/Shadow/PostShadow.frag
+
+        WorldParameters {
+            WorldViewProjectionMatrix
+            WorldMatrix
+            FrustumNearFar
+        }
+
+        Defines {
+            HARDWARE_SHADOWS : HardwareShadows
+            FILTER_MODE : FilterMode
+            PCFEDGE : PCFEdge
+            DISCARD_ALPHA : AlphaDiscardThreshold
+            COLOR_MAP : ColorMap
+            SHADOWMAP_SIZE : ShadowMapSize
+            FADE : FadeInfo
+            PSSM : Splits
+            POINTLIGHT : LightViewProjectionMatrix5
+
+            //LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer      
+        }
+
+        ForcedRenderState {
+            Blend Modulate
+            DepthWrite Off   
+            PolyOffset -0.1 0  
+        }
     }
 
   Technique PreNormalPass {
@@ -222,9 +285,13 @@ MaterialDef LogarithmicDepthBufferLighting {
         }
     }
 
+    Technique {
+        LightMode FixedPipeline
+    }
+
     Technique Glow {
 
-        VertexShader GLSL100:   Common/MatDefs/Misc/SimpleTextured.vert
+        VertexShader GLSL100:   Common/MatDefs/Misc/Unshaded.vert
         FragmentShader GLSL100: Common/MatDefs/Light/Glow.frag
 
         WorldParameters {
@@ -232,6 +299,7 @@ MaterialDef LogarithmicDepthBufferLighting {
         }
 
         Defines {
+            NEED_TEXCOORD1
             HAS_GLOWMAP : GlowMap
             HAS_GLOWCOLOR : GlowColor
         }

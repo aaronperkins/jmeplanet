@@ -24,8 +24,19 @@ package jmeplanet;
 import com.jme3.app.Application;
 import com.jme3.app.state.AbstractAppState;
 import com.jme3.app.state.AppStateManager;
+import com.jme3.light.DirectionalLight;
+import com.jme3.light.Light;
+import com.jme3.math.ColorRGBA;
+import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
 import com.jme3.post.filters.BloomFilter;
+import com.jme3.post.filters.FogFilter;
+import com.jme3.renderer.Camera;
+import com.jme3.renderer.ViewPort;
+import com.jme3.scene.Spatial;
+import com.jme3.shadow.CompareMode;
+import com.jme3.shadow.DirectionalLightShadowRenderer;
+import com.jme3.shadow.EdgeFilteringMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,11 +49,22 @@ public class PlanetAppState extends AbstractAppState {
     protected Application app;
     protected List<Planet> planets;
     protected Planet nearestPlanet;
-    protected FilterPostProcessor fpp;
-    protected PlanetFogFilter fog;
-    protected BloomFilter bloom;
     
-    public PlanetAppState() {
+    protected FilterPostProcessor nearFilter;
+    protected FilterPostProcessor farFilter;
+    protected FogFilter nearFog;
+    protected FogFilter farFog;
+    protected BloomFilter farBloom;
+    
+    protected Spatial scene;
+    protected Light sun;
+    protected ViewPort nearViewPort;
+    protected ViewPort farViewPort;
+    protected Camera nearCam;
+    protected Camera farCam;
+    
+    public PlanetAppState(Spatial scene) {
+        this.scene = scene;
         this.planets = new ArrayList<Planet>(); 
     }
     
@@ -51,20 +73,50 @@ public class PlanetAppState extends AbstractAppState {
         super.initialize(stateManager, app);
         
         this.app = app;
+        farViewPort = app.getViewPort();
+        farCam = app.getCamera();
         
-        fpp=new FilterPostProcessor(app.getAssetManager());
-        app.getViewPort().addProcessor(fpp);
+        nearCam = this.farCam.clone();
+        nearCam.setFrustumPerspective(45f, (float)nearCam.getWidth()/nearCam.getHeight(), 1f, 310f);
+        farCam.setFrustumPerspective(45f, (float)farCam.getWidth()/farCam.getHeight(), 300f, 1e7f);
         
-        fog= new PlanetFogFilter();
-        fpp.addFilter(fog);
+        nearCam.setViewPort(0f, 1f, 0.0f, 1.0f);
+        nearViewPort = this.app.getRenderManager().createMainView("NearView", nearCam);
+        nearViewPort.setBackgroundColor(ColorRGBA.BlackNoAlpha);
+        nearViewPort.setClearFlags(false, true, true);
+        nearViewPort.attachScene(this.scene);
+        
+        nearFilter=new FilterPostProcessor(app.getAssetManager());
+        nearViewPort.addProcessor(nearFilter);
+               
+        nearFog = new FogFilter();
+        //nearFilter.addFilter(nearFog);
 
-        bloom=new BloomFilter();
-        bloom.setDownSamplingFactor(2);
-        bloom.setBlurScale(1.37f);
-        bloom.setExposurePower(3.30f);
-        bloom.setExposureCutOff(0.1f);
-        bloom.setBloomIntensity(1.45f);
-        fpp.addFilter(bloom);  
+        farFilter=new FilterPostProcessor(app.getAssetManager());
+        farViewPort.addProcessor(farFilter);
+        
+        farFog = new FogFilter();
+        farFilter.addFilter(farFog);
+        
+        farBloom=new BloomFilter();
+        farBloom.setDownSamplingFactor(2);
+        farBloom.setBlurScale(1.37f);
+        farBloom.setExposurePower(3.30f);
+        farBloom.setExposureCutOff(0.1f);
+        farBloom.setBloomIntensity(1.45f);
+        farFilter.addFilter(farBloom);
+        
+        if (sun != null) {
+           DirectionalLightShadowRenderer dlsr; 
+           dlsr = new DirectionalLightShadowRenderer(app.getAssetManager(), 1024, 3);
+           dlsr.setLight((DirectionalLight)sun);
+           dlsr.setLambda(0.55f);
+           dlsr.setShadowIntensity(0.6f);
+           dlsr.setEdgeFilteringMode(EdgeFilteringMode.PCFPOISSON);
+           dlsr.setShadowCompareMode(CompareMode.Hardware);
+           dlsr.setShadowZExtend(100f);
+           nearViewPort.addProcessor(dlsr);           
+        }
     }
             
     @Override
@@ -74,13 +126,17 @@ public class PlanetAppState extends AbstractAppState {
     
     @Override
     public void update(float tpf) {
+        
+        nearCam.setLocation(farCam.getLocation());
+        nearCam.setRotation(farCam.getRotation());
+        
         this.nearestPlanet = findNearestPlanet();
         
         for (Planet planet: this.planets ) {
             planet.setCameraPosition(this.app.getCamera().getLocation());
         }
         
-        updateFog();
+        updateFogAndBloom();
     }
     
     @Override
@@ -100,6 +156,18 @@ public class PlanetAppState extends AbstractAppState {
         return this.nearestPlanet;
     }
     
+    public Vector3f getGravity() {
+        Planet planet = getNearestPlanet();
+        if (planet != null && planet.getPlanetToCamera() != null) {
+            return planet.getPlanetToCamera().normalize().mult(-9.81f);
+        } 
+        return Vector3f.ZERO;
+    }
+    
+    public void enableShadows(Light sun) {
+        this.sun = sun;
+    }
+    
     protected Planet findNearestPlanet() {
         Planet cPlanet = null;
         for (Planet planet: this.planets ) {
@@ -110,30 +178,40 @@ public class PlanetAppState extends AbstractAppState {
         return cPlanet;
     }
     
-    protected void updateFog() {
-        if (this.nearestPlanet == null)
+    protected void updateFogAndBloom() {
+        if (this.nearestPlanet == null) {
             return;
+        }
         Planet planet = this.nearestPlanet;
-        if (planet.getAtmosphereNode() != null) {
-            if (planet.getDistanceToCamera() < planet.getAtmosphereRadius() - planet.getRadius()) {
+        if (planet.getIsInOcean()) {
+             // turn on underwater fogging
+            nearFog.setFogColor(planet.getUnderwaterFogColor());
+            nearFog.setFogDistance(planet.getUnderwaterFogDistance());
+            nearFog.setFogDensity(planet.getUnderwaterFogDensity());                        
+            nearFog.setEnabled(true);
+            farFog.setFogColor(planet.getUnderwaterFogColor());
+            farFog.setFogDistance(planet.getUnderwaterFogDistance());
+            farFog.setFogDensity(planet.getUnderwaterFogDensity());                        
+            farFog.setEnabled(true);
+            farBloom.setEnabled(true);
+        } else {
+            if (planet.getIsInAtmosphere()) {
                 // turn on atomosphere fogging
-                fog.setFogColor(planet.getAtmosphereFogColor());
-                fog.setFogDistance(planet.getAtmosphereFogDistance());
-                fog.setFogDensity(planet.getAtmosphereFogDensity());
-
-                // turn on underwater fogging if needed
-                if (planet.getOceanNode() != null && planet.getDistanceToCamera() <= 2f) {
-                    fog.setFogColor(planet.getUnderwaterFogColor());
-                    fog.setFogDistance(planet.getUnderwaterFogDistance());
-                    fog.setFogDensity(planet.getUnderwaterFogDensity());                        
-                }
-                    
-                fog.setEnabled(true);                    
-            }
-            else {
-                // turn off fogging
-                fog.setEnabled(false);
-            }
+                nearFog.setFogColor(planet.getAtmosphereFogColor());
+                nearFog.setFogDistance(planet.getAtmosphereFogDistance());
+                nearFog.setFogDensity(planet.getAtmosphereFogDensity());
+                nearFog.setEnabled(true);
+                farFog.setFogColor(planet.getAtmosphereFogColor());
+                farFog.setFogDistance(planet.getAtmosphereFogDistance());
+                farFog.setFogDensity(planet.getAtmosphereFogDensity()); 
+                farFog.setEnabled(true);
+                farBloom.setEnabled(false);  
+            } else {
+                // in space
+                nearFog.setEnabled(false);
+                farFog.setEnabled(false);
+                farBloom.setEnabled(true);
+            }   
         }
     }
   

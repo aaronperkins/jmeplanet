@@ -26,14 +26,17 @@ import com.jme3.bounding.BoundingSphere;
 import com.jme3.scene.Node;
 import com.jme3.scene.Geometry;
 import com.jme3.material.Material;
+import com.jme3.material.RenderState.BlendMode;
 import com.jme3.math.FastMath;
 import com.jme3.math.ColorRGBA;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.queue.RenderQueue.Bucket;
 import com.jme3.renderer.queue.RenderQueue.ShadowMode;
 import com.jme3.scene.Mesh;
 import com.jme3.scene.Spatial;
 import com.jme3.scene.debug.Grid;
+import com.jme3.scene.shape.Quad;
 import com.jme3.scene.shape.Sphere;
 import com.jme3.texture.Image;
 import com.jme3.texture.Texture;
@@ -82,7 +85,7 @@ public class Utility {
     }
     
     public static Spatial createSkyBox(AssetManager assetManager, String textureName) {
-        Mesh sphere = new Sphere(10, 10, 100f);
+        Mesh sphere = new Sphere(10, 10, 10000f);
         sphere.setStatic();
         Geometry sky = new Geometry("SkyBox", sphere);
         sky.setQueueBucket(Bucket.Sky);
@@ -103,11 +106,11 @@ public class Utility {
     }
     
     public static Planet createEarthLikePlanet(AssetManager assetManager, float radius, HeightDataSource dataSource) {
-        
+               
         float heightScale = dataSource.getHeightScale();
         
         // Prepare planet material
-        Material planetMaterial = new Material(assetManager, "MatDefs/Planet/Terrain.j3md");
+        Material planetMaterial = new Material(assetManager, "JmePlanet/MatDefs/Terrain.j3md");
         
         // shore texture
         Texture dirt = assetManager.loadTexture("Textures/dirt.jpg");
@@ -129,31 +132,21 @@ public class Utility {
         snow.setWrap(Texture.WrapMode.Repeat);
         planetMaterial.setTexture("Region4ColorMap", snow);
         planetMaterial.setVector3("Region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
-        
-        //planetMaterial = new Material(this.assetManager, "MatDefs/Planet/LogarithmicDepthBufferSimple.j3md");
-        //planetMaterial.setColor("Color", ColorRGBA.Green);
-
-        // Turn on Logarithmic Depth Buffer to avoid z-fighting
-        planetMaterial.setBoolean("LogarithmicDepthBuffer", true);
-             
+          
         // create planet
         Planet planet = new Planet("Planet", radius, planetMaterial, dataSource);
         
         // create ocean
         Material oceanMaterial = assetManager.loadMaterial("Materials/Ocean.j3m");
-        //oceanMaterial = new Material(this.assetManager, "MatDefs/Planet/LogarithmicDepthBufferSimple.j3md");
-        //oceanMaterial.setColor("Color", ColorRGBA.Blue);
-        oceanMaterial.setBoolean("LogarithmicDepthBuffer", true);
         planet.createOcean(oceanMaterial);
         
         // create atmosphere
-        Material atmosphereMaterial = new Material(assetManager, "MatDefs/Planet/Atmosphere.j3md");
-        float atmosphereRadius = radius + (radius * .05f);
+        Material atmosphereMaterial = new Material(assetManager, "JmePlanet/MatDefs/Atmosphere.j3md");
+        float atmosphereRadius = radius + (radius * .025f);
         atmosphereMaterial.setColor("Ambient", new ColorRGBA(0.5f,0.5f,1f,1f));
-        atmosphereMaterial.setColor("Diffuse", new ColorRGBA(0.5f,0.5f,1f,1f));
+        atmosphereMaterial.setColor("Diffuse", new ColorRGBA(0.18867780436772762f, 0.4978442963618773f, 0.6616065586417131f,1.0f));
         atmosphereMaterial.setColor("Specular", new ColorRGBA(0.7f,0.7f,1f,1f));
         atmosphereMaterial.setFloat("Shininess", 3.0f);
-        atmosphereMaterial.setBoolean("LogarithmicDepthBuffer", true);
         
         planet.createAtmosphere(atmosphereMaterial, atmosphereRadius);
 
@@ -165,7 +158,7 @@ public class Utility {
         float heightScale = dataSource.getHeightScale();
         
         // Prepare planet material
-        Material planetMaterial = new Material(assetManager, "MatDefs/Planet/Terrain.j3md");
+        Material planetMaterial = new Material(assetManager, "JmePlanet/MatDefs/Terrain.j3md");
         
         // region1 texture
         Texture region1 = assetManager.loadTexture("Textures/moon.jpg");
@@ -187,15 +180,11 @@ public class Utility {
         region4.setWrap(Texture.WrapMode.Repeat);
         planetMaterial.setTexture("Region4ColorMap", region4);
         planetMaterial.setVector3("Region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
-
-        // Turn on Logarithmic Depth Buffer to avoid z-fighting
-        planetMaterial.setBoolean("LogarithmicDepthBuffer", true);
-             
+           
         // create planet
         Planet planet = new Planet("Moon", radius, planetMaterial, dataSource);
         
         return planet;
     }
-    
-    
+     
 }

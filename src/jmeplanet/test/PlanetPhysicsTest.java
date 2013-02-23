@@ -90,10 +90,6 @@ public class PlanetPhysicsTest extends SimpleApplication {
         // setup input
         setupInput();
         
-        // Setup camera
-        this.getCamera().setFrustumFar(10000000f);
-        this.getCamera().setFrustumNear(1.0f);
-        
         // setup camera and camera node
         CameraControl cameraControl = new CameraControl(this.getCamera(),ControlDirection.SpatialToCamera);
         cameraNode = new CameraNode("Camera", cameraControl);
@@ -103,14 +99,13 @@ public class PlanetPhysicsTest extends SimpleApplication {
         cameraNode.addControl(cameraNodePhysicsControl);
         rootNode.attachChild(cameraNode);
         bulletAppState.getPhysicsSpace().add(cameraNode);
-        
         cameraNodePhysicsControl.setAngularFactor(0);
         cameraNodePhysicsControl.setLinearDamping(0.8f);
         cameraNodePhysicsControl.setAngularDamping(0.99f);
         
         // Add sun
         DirectionalLight sun = new DirectionalLight();
-        sun.setColor(new ColorRGBA(0.45f,0.5f,0.6f,1.0f));
+        sun.setColor(new ColorRGBA(0.45f,0.45f,0.35f,1.0f));
         sun.setDirection(new Vector3f(1f, -1f, 0f));
         rootNode.addLight(sun);
         
@@ -120,7 +115,8 @@ public class PlanetPhysicsTest extends SimpleApplication {
         rootNode.attachChild(sceneNode);
         
         // Add planet app state
-        planetAppState = new PlanetAppState();
+        planetAppState = new PlanetAppState(rootNode);
+        planetAppState.enableShadows(sun);
         stateManager.attach(planetAppState);
         
         // Add planet

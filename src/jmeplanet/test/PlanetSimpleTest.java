@@ -26,17 +26,17 @@ import com.jme3.collision.CollisionResult;
 import com.jme3.collision.CollisionResults;
 import com.jme3.system.AppSettings;
 import com.jme3.material.Material;
-import com.jme3.light.DirectionalLight;
-import com.jme3.light.PointLight;
 import com.jme3.math.Vector3f;
 import com.jme3.input.KeyInput;
 import com.jme3.input.MouseInput;
 import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.input.controls.MouseButtonTrigger;
+import com.jme3.light.DirectionalLight;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Ray;
+import com.jme3.renderer.Camera;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Sphere;
@@ -53,6 +53,8 @@ public class PlanetSimpleTest extends SimpleApplication {
     
     private PlanetAppState planetAppState;
     private Geometry mark;
+    
+    Camera cam2;
     
     public static void main(String[] args){
         AppSettings settings = new AppSettings(true);
@@ -84,9 +86,7 @@ public class PlanetSimpleTest extends SimpleApplication {
         inputManager.addListener(actionListener, "COLLISION_TEST"); 
         
         // Setup camera
-        this.getCamera().setFrustumFar(10000000f);
-        this.getCamera().setFrustumNear(1.0f);
-        
+             
         // In orbit
         this.getCamera().setLocation(new Vector3f(0f, 0f, 180000f));
         
@@ -95,11 +95,11 @@ public class PlanetSimpleTest extends SimpleApplication {
         //this.getCamera().lookAtDirection(new Vector3f(0.06276598f, 0.94458306f, -0.3222158f), Vector3f.UNIT_Y);
         
         // Add sun
-        PointLight sun = new PointLight();
-        //DirectionalLight sun = new DirectionalLight();
-        sun.setColor(new ColorRGBA(0.45f,0.5f,0.6f,1.0f));
-        //sun.setDirection(new Vector3f(1f, -1f, 0f));
-        sun.setPosition(new Vector3f(-500000f,0,180000f));
+        //PointLight sun = new PointLight();
+        //sun.setPosition(new Vector3f(-100000f,0,180000f));
+        DirectionalLight sun = new DirectionalLight();
+        sun.setDirection(new Vector3f(1f, -1f, 0f));
+        sun.setColor(new ColorRGBA(0.45f,0.45f,0.35f,1.0f));      
         rootNode.addLight(sun);
         
         // Add sky
@@ -110,13 +110,12 @@ public class PlanetSimpleTest extends SimpleApplication {
         // Create collision test mark
         Sphere sphere = new Sphere(30, 30, 5f);
         mark = new Geometry("mark", sphere);
-        Material mark_mat = new Material(assetManager, "MatDefs/Planet/LogarithmicDepthBufferSimple.j3md");
-        mark_mat.setBoolean("LogarithmicDepthBuffer", true);
+        Material mark_mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
         mark_mat.setColor("Color", ColorRGBA.Red);
         mark.setMaterial(mark_mat);
         
         // Add planet app state
-        planetAppState = new PlanetAppState();
+        planetAppState = new PlanetAppState(rootNode);
         stateManager.attach(planetAppState);
         
         // Add planet
@@ -133,10 +132,11 @@ public class PlanetSimpleTest extends SimpleApplication {
         planetAppState.addPlanet(moon);
         rootNode.attachChild(moon);
         moon.setLocalTranslation(-150000f, 0f, 0f);
+        
     }
     
     @Override
-    public void simpleUpdate(float tpf) {
+    public void simpleUpdate(float tpf) {        
         // slow camera down as we approach a planet
         Planet planet = planetAppState.getNearestPlanet();
         if (planet != null && planet.getPlanetToCamera() != null) {

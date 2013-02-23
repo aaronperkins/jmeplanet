@@ -23,10 +23,6 @@ varying vec3 vNormal;
 varying vec3 vViewDir;
 varying vec4 vLightDir;
 
-#ifdef LOGARITHIMIC_DEPTH_BUFFER
-varying vec4 positionProjectionSpace;
-#endif
-
 // JME3 lights in world space
 void lightComputeDir(in vec3 worldPos, in vec4 color, in vec4 position, out vec4 lightDir){
     float posLight = step(0.5, color.w);
@@ -60,10 +56,6 @@ void main(){
     AmbientSum  = vec3(0.2, 0.2, 0.2) * g_AmbientLightColor.rgb; // Default: ambient color is dark gray
     DiffuseSum  = lightColor;
     SpecularSum = vec3(0.0);
-
-    #ifdef LOGARITHIMIC_DEPTH_BUFFER
-        positionProjectionSpace = gl_Position;
-    #endif
 }
 
 
