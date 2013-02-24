@@ -40,6 +40,7 @@ import com.jme3.renderer.Camera;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
 import com.jme3.scene.shape.Sphere;
+import com.jme3.water.SimpleWaterProcessor;
 import jmeplanet.FractalDataSource;
 
 import jmeplanet.Planet;
@@ -115,13 +116,13 @@ public class PlanetSimpleTest extends SimpleApplication {
         mark.setMaterial(mark_mat);
         
         // Add planet app state
-        planetAppState = new PlanetAppState(rootNode);
+        planetAppState = new PlanetAppState(rootNode, sun);
         stateManager.attach(planetAppState);
         
         // Add planet
         FractalDataSource planetDataSource = new FractalDataSource(4);
         planetDataSource.setHeightScale(800f);
-        Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, planetDataSource);
+        Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, null, planetDataSource);
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);
         

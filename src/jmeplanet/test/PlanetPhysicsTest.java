@@ -115,14 +115,13 @@ public class PlanetPhysicsTest extends SimpleApplication {
         rootNode.attachChild(sceneNode);
         
         // Add planet app state
-        planetAppState = new PlanetAppState(rootNode);
-        planetAppState.enableShadows(sun);
+        planetAppState = new PlanetAppState(rootNode, sun);
         stateManager.attach(planetAppState);
         
         // Add planet
         FractalDataSource planetDataSource = new FractalDataSource(4);
         planetDataSource.setHeightScale(800f);
-        Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, planetDataSource);
+        Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, null, planetDataSource);
         planet.addControl(new RigidBodyControl(new PlanetCollisionShape(planet.getLocalTranslation(), planet.getRadius(), planetDataSource), 0f));
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);

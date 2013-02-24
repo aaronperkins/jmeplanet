@@ -8,10 +8,10 @@
 */
 float computeLogDepthBuffer(in float z, in float zn, in float zf) {
         const float C = 1.0;
-        return (log(C * z + 1) / log(C * zf + 1));
+        return (log(C * z + 1.0) / log(C * zf + 1.0));
 }
 
 float convertLogDepthBufferToZ(in float depth, in float zn, in float zf) {
         const float C = 1.0;
-        return ( exp( depth * log( C * zf + 1 ) ) - 1 ) / C;
+        return ( exp( depth * log( C * zf + 1.0 ) ) - 1.0 ) / C;
 }

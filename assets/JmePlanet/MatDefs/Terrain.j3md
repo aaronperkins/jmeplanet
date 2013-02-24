@@ -84,9 +84,7 @@ MaterialDef PlanetTerrain {
 
         Defines {
             COLOR_MAP : ColorMap
-            DISCARD_ALPHA : AlphaDiscardThreshold
-
-            LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer      
+            DISCARD_ALPHA : AlphaDiscardThreshold 
         }
 
         ForcedRenderState {
@@ -146,9 +144,7 @@ MaterialDef PlanetTerrain {
             SHADOWMAP_SIZE : ShadowMapSize
             FADE : FadeInfo
             PSSM : Splits
-            POINTLIGHT : LightViewProjectionMatrix5
-
-            LOGARITHIMIC_DEPTH_BUFFER : LogarithmicDepthBuffer      
+            POINTLIGHT : LightViewProjectionMatrix5     
         }
 
         ForcedRenderState {

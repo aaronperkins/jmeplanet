@@ -105,7 +105,7 @@ public class Utility {
         return sky;
     }
     
-    public static Planet createEarthLikePlanet(AssetManager assetManager, float radius, HeightDataSource dataSource) {
+    public static Planet createEarthLikePlanet(AssetManager assetManager, float radius, Material oceanMaterial, HeightDataSource dataSource) {
                
         float heightScale = dataSource.getHeightScale();
         
@@ -137,7 +137,9 @@ public class Utility {
         Planet planet = new Planet("Planet", radius, planetMaterial, dataSource);
         
         // create ocean
-        Material oceanMaterial = assetManager.loadMaterial("Materials/Ocean.j3m");
+        if (oceanMaterial == null) {
+            oceanMaterial = assetManager.loadMaterial("Materials/Ocean.j3m");
+        }
         planet.createOcean(oceanMaterial);
         
         // create atmosphere

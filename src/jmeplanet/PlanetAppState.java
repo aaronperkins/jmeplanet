@@ -30,13 +30,16 @@ import com.jme3.math.ColorRGBA;
 import com.jme3.math.Vector3f;
 import com.jme3.post.FilterPostProcessor;
 import com.jme3.post.filters.BloomFilter;
+import com.jme3.post.filters.DepthOfFieldFilter;
 import com.jme3.post.filters.FogFilter;
+import com.jme3.post.filters.LightScatteringFilter;
 import com.jme3.renderer.Camera;
 import com.jme3.renderer.ViewPort;
 import com.jme3.scene.Spatial;
 import com.jme3.shadow.CompareMode;
 import com.jme3.shadow.DirectionalLightShadowRenderer;
 import com.jme3.shadow.EdgeFilteringMode;
+import com.jme3.water.SimpleWaterProcessor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,14 +60,18 @@ public class PlanetAppState extends AbstractAppState {
     protected BloomFilter farBloom;
     
     protected Spatial scene;
-    protected Light sun;
+    protected DirectionalLight sun;
     protected ViewPort nearViewPort;
     protected ViewPort farViewPort;
     protected Camera nearCam;
     protected Camera farCam;
     
-    public PlanetAppState(Spatial scene) {
+    protected boolean shadowsEnabled;
+    protected DirectionalLightShadowRenderer dlsr; 
+     
+    public PlanetAppState(Spatial scene, DirectionalLight sun) {
         this.scene = scene;
+        this.sun = sun;
         this.planets = new ArrayList<Planet>(); 
     }
     
@@ -107,16 +114,18 @@ public class PlanetAppState extends AbstractAppState {
         farFilter.addFilter(farBloom);
         
         if (sun != null) {
-           DirectionalLightShadowRenderer dlsr; 
-           dlsr = new DirectionalLightShadowRenderer(app.getAssetManager(), 1024, 3);
-           dlsr.setLight((DirectionalLight)sun);
-           dlsr.setLambda(0.55f);
-           dlsr.setShadowIntensity(0.6f);
-           dlsr.setEdgeFilteringMode(EdgeFilteringMode.PCFPOISSON);
-           dlsr.setShadowCompareMode(CompareMode.Hardware);
-           dlsr.setShadowZExtend(100f);
-           nearViewPort.addProcessor(dlsr);           
-        }
+           
+            dlsr = new DirectionalLightShadowRenderer(app.getAssetManager(), 1024, 3);
+            dlsr.setLight(sun);
+            dlsr.setLambda(0.55f);
+            dlsr.setShadowIntensity(0.6f);
+            dlsr.setEdgeFilteringMode(EdgeFilteringMode.PCFPOISSON);
+            dlsr.setShadowCompareMode(CompareMode.Hardware);
+            dlsr.setShadowZExtend(100f);
+            if (shadowsEnabled) { 
+                nearViewPort.addProcessor(dlsr);
+            }
+        }        
     }
             
     @Override
@@ -164,10 +173,20 @@ public class PlanetAppState extends AbstractAppState {
         return Vector3f.ZERO;
     }
     
-    public void enableShadows(Light sun) {
-        this.sun = sun;
+    public void setShadowsEnabled(boolean enabled) {
+        this.shadowsEnabled = enabled;
+        
+        if (dlsr != null)
+        {
+            if (enabled) {
+                nearViewPort.addProcessor(dlsr);
+            }
+            else {
+                nearViewPort.removeProcessor(dlsr);
+            }
+        }
     }
-    
+      
     protected Planet findNearestPlanet() {
         Planet cPlanet = null;
         for (Planet planet: this.planets ) {

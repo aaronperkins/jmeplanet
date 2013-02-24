@@ -103,7 +103,7 @@ public class SpaceMonkey extends SimpleApplication implements ActionListener {
     
     @Override
     public void simpleInitApp() {
-        this.setDisplayFps(false);
+        //this.setDisplayFps(false);
         this.setDisplayStatView(false);
         
         // Only show severe errors in log
@@ -187,14 +187,14 @@ public class SpaceMonkey extends SimpleApplication implements ActionListener {
         rootNode.attachChild(sceneNode);
         
         // Add planet app state
-        planetAppState = new PlanetAppState(rootNode);
-        planetAppState.enableShadows(sun);
+        planetAppState = new PlanetAppState(rootNode, sun);
+        planetAppState.setShadowsEnabled(true);
         stateManager.attach(planetAppState);
 
         // Add planet
         FractalDataSource planetDataSource = new FractalDataSource(4);
         planetDataSource.setHeightScale(800f);
-        Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, planetDataSource);
+        Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, null, planetDataSource);
         planet.addControl(new RigidBodyControl(new PlanetCollisionShape(planet.getLocalTranslation(), planet.getRadius(), planetDataSource), 0f));
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);
