@@ -121,17 +121,22 @@ public class Utility {
         Texture grass = assetManager.loadTexture("Textures/grass.jpg");
         grass.setWrap(Texture.WrapMode.Repeat);
         planetMaterial.setTexture("Region2ColorMap", grass);
-        planetMaterial.setVector3("Region2", new Vector3f(heightScale * 0.16f, heightScale * 0.88f, 0));
-        // rock texture
-        Texture rock = assetManager.loadTexture("Textures/rock.jpg");
-        rock.setWrap(Texture.WrapMode.Repeat);
-        planetMaterial.setTexture("Region3ColorMap", rock);
-        planetMaterial.setVector3("Region3", new Vector3f(heightScale * 0.84f, heightScale * 1.36f, 0));
+        planetMaterial.setVector3("Region2", new Vector3f(heightScale * 0.16f, heightScale * 1.05f, 0));
+        // gravel texture
+        Texture gravel = assetManager.loadTexture("Textures/gravel_mud.jpg");
+        gravel.setWrap(Texture.WrapMode.Repeat);
+        planetMaterial.setTexture("Region3ColorMap", gravel);
+        planetMaterial.setVector3("Region3", new Vector3f(heightScale * 0.84f, heightScale * 1.1f, 0));
         // snow texture
         Texture snow = assetManager.loadTexture("Textures/snow.jpg");
         snow.setWrap(Texture.WrapMode.Repeat);
         planetMaterial.setTexture("Region4ColorMap", snow);
         planetMaterial.setVector3("Region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
+        
+        // rock texture
+        Texture rock = assetManager.loadTexture("Textures/rock.jpg");
+        rock.setWrap(Texture.WrapMode.Repeat);
+        planetMaterial.setTexture("SlopeColorMap", rock);
           
         // create planet
         Planet planet = new Planet("Planet", radius, planetMaterial, dataSource);
@@ -163,25 +168,30 @@ public class Utility {
         Material planetMaterial = new Material(assetManager, "JmePlanet/MatDefs/Terrain.j3md");
         
         // region1 texture
-        Texture region1 = assetManager.loadTexture("Textures/moon.jpg");
+        Texture region1 = assetManager.loadTexture("Textures/moon_sea.jpg");
         region1.setWrap(Texture.WrapMode.Repeat);
         planetMaterial.setTexture("Region1ColorMap", region1);
-        planetMaterial.setVector3("Region1", new Vector3f(0, heightScale * 0.2f, 0));
+        planetMaterial.setVector3("Region1", new Vector3f(heightScale * 0f, heightScale * 0.75f, 0));
         // region2 texture
         Texture region2 = assetManager.loadTexture("Textures/moon.jpg");
         region2.setWrap(Texture.WrapMode.Repeat);
         planetMaterial.setTexture("Region2ColorMap", region2);
-        planetMaterial.setVector3("Region2", new Vector3f(heightScale * 0.16f, heightScale * 0.88f, 0));
+        planetMaterial.setVector3("Region2", new Vector3f(heightScale * 0f, heightScale * 0.75f, 0));
         // region3 texture
-        Texture region3 = assetManager.loadTexture("Textures/rock.jpg");
+        Texture region3 = assetManager.loadTexture("Textures/moon.jpg");
         region3.setWrap(Texture.WrapMode.Repeat);
         planetMaterial.setTexture("Region3ColorMap", region3);
-        planetMaterial.setVector3("Region3", new Vector3f(heightScale * 0.84f, heightScale * 1.36f, 0));
+        planetMaterial.setVector3("Region3", new Vector3f(heightScale * 0f, heightScale * 0.75f, 0));
         // region4 texture
-        Texture region4 = assetManager.loadTexture("Textures/rock.jpg");
+        Texture region4 = assetManager.loadTexture("Textures/moon_rough.jpg");
         region4.setWrap(Texture.WrapMode.Repeat);
         planetMaterial.setTexture("Region4ColorMap", region4);
-        planetMaterial.setVector3("Region4", new Vector3f(heightScale * 0.94f, heightScale * 1.5f, 0));
+        planetMaterial.setVector3("Region4", new Vector3f(heightScale * 0.5f, heightScale * 1.0f, 0));
+        
+        // rock texture
+        Texture rock = assetManager.loadTexture("Textures/rock.jpg");
+        rock.setWrap(Texture.WrapMode.Repeat);
+        planetMaterial.setTexture("SlopeColorMap", rock);
            
         // create planet
         Planet planet = new Planet("Moon", radius, planetMaterial, dataSource);

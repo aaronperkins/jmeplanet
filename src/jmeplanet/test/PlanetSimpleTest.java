@@ -99,8 +99,8 @@ public class PlanetSimpleTest extends SimpleApplication {
         //PointLight sun = new PointLight();
         //sun.setPosition(new Vector3f(-100000f,0,180000f));
         DirectionalLight sun = new DirectionalLight();
-        sun.setDirection(new Vector3f(1f, -1f, 0f));
-        sun.setColor(new ColorRGBA(0.45f,0.45f,0.35f,1.0f));      
+        sun.setDirection(new Vector3f(-.1f, 0f, -1f));
+        sun.setColor(new ColorRGBA(0.75f,0.75f,0.75f,1.0f));      
         rootNode.addLight(sun);
         
         // Add sky
@@ -121,7 +121,7 @@ public class PlanetSimpleTest extends SimpleApplication {
         
         // Add planet
         FractalDataSource planetDataSource = new FractalDataSource(4);
-        planetDataSource.setHeightScale(800f);
+        planetDataSource.setHeightScale(900f);
         Planet planet = Utility.createEarthLikePlanet(getAssetManager(), 63710.0f, null, planetDataSource);
         planetAppState.addPlanet(planet);
         rootNode.attachChild(planet);

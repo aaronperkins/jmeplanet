@@ -12,6 +12,7 @@ MaterialDef PlanetTerrain {
 		Texture2D Region2ColorMap
 		Texture2D Region3ColorMap
 		Texture2D Region4ColorMap
+                Texture2D SlopeColorMap
 		Vector3 Region1
 		Vector3 Region2
 		Vector3 Region3

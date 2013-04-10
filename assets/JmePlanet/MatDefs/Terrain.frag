@@ -8,9 +8,11 @@ uniform sampler2D m_Region1ColorMap;
 uniform sampler2D m_Region2ColorMap;
 uniform sampler2D m_Region3ColorMap;
 uniform sampler2D m_Region4ColorMap;
+uniform sampler2D m_SlopeColorMap;
 uniform vec3 m_PatchCenter;
 uniform float m_PlanetRadius;
 
+varying vec3 wvNormal;
 varying vec3 vNormal;
 varying vec4 positionObjectSpace;
 varying vec2 texCoord;
@@ -35,23 +37,27 @@ vec4 generateTerrainColor(float height) {
             + 0.25 * texture2D(m_Region1ColorMap, (1.0 / 8.0) * texCoord)
             + 0.25 * texture2D(m_Region1ColorMap, (1.0 / (8.0*8.0)) * texCoord)
             + 0.25 * texture2D(m_Region1ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
-    vec4 region2Color = 0.25 * texture2D(m_Region2ColorMap, texCoord)
+    vec4 region2Color = 0.5 * texture2D(m_Region2ColorMap, texCoord)
             + 0.25 * texture2D(m_Region2ColorMap, (1.0 / 8.0) * texCoord)
             + 0.25 * texture2D(m_Region2ColorMap, (1.0 / (8.0*8.0)) * texCoord)
             + 0.25 * texture2D(m_Region2ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
-    vec4 region3Color = 0.25 * texture2D(m_Region3ColorMap, texCoord)
+    vec4 region3Color = 1.0 * texture2D(m_Region3ColorMap, texCoord);
             + 0.25 * texture2D(m_Region3ColorMap, (1.0 / 8.0) * texCoord)
             + 0.25 * texture2D(m_Region3ColorMap, (1.0 / (8.0*8.0)) * texCoord)
             + 0.25 * texture2D(m_Region3ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
-    vec4 region4Color = 0.25 * texture2D(m_Region4ColorMap, texCoord)
+    vec4 region4Color = 1.0 * texture2D(m_Region4ColorMap, texCoord);
             + 0.25 * texture2D(m_Region4ColorMap, (1.0 / 8.0) * texCoord)
             + 0.25 * texture2D(m_Region4ColorMap, (1.0 / (8.0*8.0)) * texCoord)
             + 0.25 * texture2D(m_Region4ColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
+    vec4 slopeColor = 1.0 * texture2D(m_SlopeColorMap, texCoord);
+            + 0.25 * texture2D(m_SlopeColorMap, (1.0 / 8.0) * texCoord)
+            + 0.25 * texture2D(m_SlopeColorMap, (1.0 / (8.0*8.0)) * texCoord)
+            + 0.25 * texture2D(m_SlopeColorMap, (1.0 / (8.0*8.0*8.0)) * texCoord);
 
     vec4 color;
-    color = vec4(0,0,0,1);
+    color = vec4(0.0,0.0,0.0,1.0);
 
-    //float slope = degrees(acos(dot(normalize(m_patchCenter + position), n_normal)));
+    float slope = 1 - clamp(dot(normalize(vNormal), normalize(m_PatchCenter + positionObjectSpace.xyz)), 0.0, 1.0);
 
     float regionMin = 0.0;
     float regionMax = 0.0;
@@ -84,6 +90,8 @@ vec4 generateTerrainColor(float height) {
     regionWeight = getWeight(height, regionMin, regionMax);
     color = mix(color, region4Color, regionWeight);
 
+    color = mix(color, slopeColor, slope);
+
     return (color);
 }
 
@@ -99,14 +107,14 @@ vec2 computeLighting(in vec3 wvNorm, in vec3 wvViewDir, in vec3 wvLightDir){
 
 void main() {
     // Compute height of position from surface of planet
-    float height = length(vec4(m_PatchCenter, 1.0) + positionObjectSpace) - m_PlanetRadius;
+    float height = length(m_PatchCenter + positionObjectSpace.xyz) - m_PlanetRadius;
 
     vec4 color = generateTerrainColor(height);
 
     vec4 lightDir = vLightDir;
     lightDir.xyz = normalize(lightDir.xyz);
     vec3 viewDir = normalize(vViewDir);
-    vec2 light = computeLighting(vNormal, viewDir, lightDir.xyz);
+    vec2 light = computeLighting(wvNormal, viewDir, lightDir.xyz);
 
     gl_FragColor.rgb =  AmbientSum * color.rgb + DiffuseSum.rgb * color.rgb * vec3(light.x);
 }
